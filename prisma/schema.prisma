@@ -1,0 +1,180 @@
+// Prisma Schema - elva-server
+// 陪玩公会管理系统数据模型
+
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ==================== 用户 ====================
+model User {
+  id        BigInt   @id @default(autoincrement())
+  phone     String   @unique @db.VarChar(20)
+  password  String   @db.VarChar(200)
+  nickname  String?  @db.VarChar(50)
+  avatar    String?  @db.VarChar(500)
+  status    Int      @default(1) @db.TinyInt // 1正常 2禁用
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  clubMembers ClubMember[]
+  reports     Report[]     @relation("ReportCreator")
+  approvals   Report[]     @relation("ReportApprover")
+  salaries    Salary[]     @relation("SalaryPayer")
+
+  @@map("user")
+}
+
+// ==================== 俱乐部 ====================
+model Club {
+  id          BigInt   @id @default(autoincrement())
+  name        String   @db.VarChar(100)
+  logo        String?  @db.VarChar(500)
+  description String?  @db.Text
+  ownerId     BigInt   @map("owner_id")
+  status      Int      @default(1) @db.TinyInt // 1正常 2禁用
+  ext         Json?    // 扩展字段（预留）
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  members  ClubMember[]
+  projects Project[]
+  reports  Report[]
+  earnings Earning[]
+  salaries Salary[]
+
+  @@map("club")
+}
+
+// ==================== 俱乐部成员 ====================
+model ClubMember {
+  id       BigInt   @id @default(autoincrement())
+  clubId   BigInt   @map("club_id")
+  userId   BigInt   @map("user_id")
+  // 角色: 1创始人 2管理员 3成员 (预留4=组长)
+  role     Int      @default(3) @db.TinyInt
+  // 状态: 1正常 2待审核 3已退出
+  status   Int      @default(1) @db.TinyInt
+  groupId  String?  @map("group_id") @db.VarChar(64) // 预留：所属组
+  ext      Json?    // 扩展字段（预留）
+  joinedAt DateTime @default(now()) @map("joined_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  club Club @relation(fields: [clubId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([clubId, userId])
+  @@map("club_member")
+}
+
+// ==================== 项目 ====================
+model Project {
+  id              BigInt   @id @default(autoincrement())
+  clubId          BigInt   @map("club_id")
+  name            String   @db.VarChar(100)
+  // 类型: 1游戏 2礼物
+  type            Int      @default(1) @db.TinyInt
+  price           Decimal  @db.Decimal(10, 2)
+  // 价格类型: 1按时长 2按次
+  priceType       Int      @default(1) @map("price_type") @db.TinyInt
+  // 抽成类型: 1固定金额 2比例
+  commissionType  Int      @default(1) @map("commission_type") @db.TinyInt
+  commissionValue Decimal  @default(0) @map("commission_value") @db.Decimal(10, 2)
+  // 状态: 1启用 2禁用
+  status          Int      @default(1) @db.TinyInt
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  club    Club     @relation(fields: [clubId], references: [id])
+  reports Report[]
+
+  @@map("project")
+}
+
+// ==================== 报备 ====================
+model Report {
+  id           BigInt    @id @default(autoincrement())
+  clubId       BigInt    @map("club_id")
+  memberId     BigInt    @map("member_id")
+  projectId    BigInt    @map("project_id")
+  duration     Int?      // 时长（分钟）
+  quantity     Int?      // 数量
+  bossName     String    @map("boss_name") @db.VarChar(50)
+  amount       Decimal   @default(0) @db.Decimal(10, 2)
+  commission   Decimal   @default(0) @db.Decimal(10, 2)
+  actualAmount Decimal   @default(0) @map("actual_amount") @db.Decimal(10, 2)
+  // 状态: 1待审批 2已通过 3已驳回 4已撤销
+  status       Int       @default(1) @db.TinyInt
+  remark       String?   @db.VarChar(500)
+  // 预留：审批流配置ID
+  approvalFlowId String? @map("approval_flow_id") @db.VarChar(64)
+  // 预留：规则引擎ID
+  ruleId       String?   @map("rule_id") @db.VarChar(64)
+  ext          Json?     // 扩展字段（预留）
+  createdBy    BigInt    @map("created_by")
+  approvedBy   BigInt?   @map("approved_by")
+  approvedAt   DateTime? @map("approved_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  club     Club     @relation(fields: [clubId], references: [id])
+  project  Project  @relation(fields: [projectId], references: [id])
+  creator  User     @relation("ReportCreator", fields: [createdBy], references: [id])
+  approver User?    @relation("ReportApprover", fields: [approvedBy], references: [id])
+  earnings Earning[]
+
+  @@map("report")
+}
+
+// ==================== 收入明细 ====================
+model Earning {
+  id       BigInt   @id @default(autoincrement())
+  clubId   BigInt   @map("club_id")
+  memberId BigInt   @map("member_id")
+  reportId BigInt?  @map("report_id")
+  // 类型: 1收入 2返点 3扣减
+  type     Int      @default(1) @db.TinyInt
+  amount   Decimal  @db.Decimal(10, 2)
+  // 状态: 1待发放 2已发放 3已取消
+  status   Int      @default(1) @db.TinyInt
+  salaryId BigInt?  @map("salary_id")
+  remark   String?  @db.VarChar(500)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  club   Club    @relation(fields: [clubId], references: [id])
+  report Report? @relation(fields: [reportId], references: [id])
+  salary Salary? @relation(fields: [salaryId], references: [id])
+
+  @@map("earning")
+}
+
+// ==================== 工资 ====================
+model Salary {
+  id              BigInt    @id @default(autoincrement())
+  clubId          BigInt    @map("club_id")
+  memberId        BigInt    @map("member_id")
+  periodStart     DateTime  @map("period_start") @db.Date
+  periodEnd       DateTime  @map("period_end") @db.Date
+  totalAmount     Decimal   @default(0) @map("total_amount") @db.Decimal(10, 2)
+  totalCommission Decimal   @default(0) @map("total_commission") @db.Decimal(10, 2)
+  actualAmount    Decimal   @default(0) @map("actual_amount") @db.Decimal(10, 2)
+  // 状态: 1待发放 2发放中 3已发放
+  status          Int       @default(1) @db.TinyInt
+  remark          String?   @db.VarChar(500)
+  paidBy          BigInt?   @map("paid_by")
+  paidAt          DateTime? @map("paid_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  club     Club      @relation(fields: [clubId], references: [id])
+  payer    User?     @relation("SalaryPayer", fields: [paidBy], references: [id])
+  earnings Earning[]
+
+  @@map("salary")
+}
