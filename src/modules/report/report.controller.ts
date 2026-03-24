@@ -53,4 +53,16 @@ export class ReportController {
   ) {
     return this.reportService.reject(BigInt(body.reportId), BigInt(userId), body.reason);
   }
+
+  /**
+   * 撤销报备
+   * POST /api/report/cancel
+   */
+  @Post('cancel')
+  cancel(
+    @CurrentUser('id') userId: string,
+    @Body('reportId') reportId: string,
+  ) {
+    return this.reportService.cancel(BigInt(reportId), BigInt(userId));
+  }
 }

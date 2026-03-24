@@ -141,4 +141,45 @@ export class ReportService {
       return { success: true };
     });
   }
+
+  /**
+   * 撤销报备（仅限待审批状态，且只能撤销自己的报备）
+   */
+  async cancel(reportId: bigint, memberId: bigint) {
+    const report = await this.prisma.report.findUnique({ 
+      where: { id: reportId },
+      include: { earnings: true },
+    });
+    
+    if (!report) {
+      throw new NotFoundException('报备不存在');
+    }
+    
+    if (report.status !== 1) {
+      throw new BadRequestException('只能撤销待审批的报备');
+    }
+    
+    // 验证是否是自己的报备
+    if (report.memberId !== memberId) {
+      throw new BadRequestException('只能撤销自己提交的报备');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // 更新报备状态为已撤销
+      await tx.report.update({
+        where: { id: reportId },
+        data: { status: 4 },
+      });
+      
+      // 删除关联的收入记录
+      if (report.earnings?.length) {
+        await tx.earning.updateMany({
+          where: { reportId },
+          data: { status: 3 },
+        });
+      }
+      
+      return { success: true, message: '报备已撤销' };
+    });
+  }
 }
