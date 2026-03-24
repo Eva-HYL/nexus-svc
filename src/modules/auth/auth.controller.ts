@@ -6,6 +6,15 @@ class WxLoginDto {
   code: string;
 }
 
+class SmsLoginDto {
+  phone: string;
+  code: string;
+}
+
+class SendSmsDto {
+  phone: string;
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -20,7 +29,7 @@ export class AuthController {
   }
 
   /**
-   * 用户登录
+   * 用户登录（密码登录）
    * POST /api/auth/login
    */
   @Post('login')
@@ -37,6 +46,26 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async wxLogin(@Body() dto: WxLoginDto) {
     return this.authService.wxLogin(dto.code);
+  }
+
+  /**
+   * 验证码登录
+   * POST /api/auth/sms-login
+   */
+  @Post('sms-login')
+  @HttpCode(HttpStatus.OK)
+  async smsLogin(@Body() dto: SmsLoginDto) {
+    return this.authService.loginBySms(dto.phone, dto.code);
+  }
+
+  /**
+   * 发送验证码
+   * POST /api/auth/send-sms
+   */
+  @Post('send-sms')
+  @HttpCode(HttpStatus.OK)
+  async sendSms(@Body() dto: SendSmsDto) {
+    return this.authService.sendSmsCode(dto.phone);
   }
 
   /**

@@ -117,6 +117,69 @@ export class AuthService {
   }
 
   /**
+   * 验证码登录
+   * 验证手机号和验证码，查找或创建用户
+   */
+  async loginBySms(phone: string, code: string) {
+    // 验证手机号格式
+    if (!/^1[3-9]\d{9}$/.test(phone)) {
+      throw new BadRequestException('手机号格式不正确');
+    }
+
+    // TODO: 验证验证码（实际生产环境需要从 Redis 或数据库验证）
+    // 这里暂时使用简单的固定验证码 123456 用于测试
+    if (code !== '123456') {
+      throw new UnauthorizedException('验证码错误');
+    }
+
+    // 查找用户
+    let user = await this.prisma.user.findUnique({
+      where: { phone },
+    });
+
+    // 如果用户不存在，创建新用户
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          phone,
+          password: await bcrypt.hash(Math.random().toString(36), SALT_ROUNDS),
+          nickname: `用户${phone.slice(-4)}`,
+          status: UserStatus.ACTIVE,
+        },
+      });
+      this.logger.log(`短信登录新用户注册: ${user.id}, phone: ${phone}`);
+    }
+
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new UnauthorizedException('账号已被禁用');
+    }
+
+    this.logger.log(`短信登录成功: ${user.id}`);
+    return this.generateTokenResponse(user);
+  }
+
+  /**
+   * 发送验证码
+   */
+  async sendSmsCode(phone: string) {
+    // 验证手机号格式
+    if (!/^1[3-9]\d{9}$/.test(phone)) {
+      throw new BadRequestException('手机号格式不正确');
+    }
+
+    // TODO: 实际生产环境需要调用短信服务商 API 发送验证码
+    // 这里暂时只记录日志，返回成功
+    this.logger.log(`发送验证码到手机: ${phone}, code: 123456`);
+    
+    return { 
+      success: true, 
+      message: '验证码已发送',
+      // 测试环境返回验证码，生产环境需要删除
+      _debug_code: process.env.NODE_ENV !== 'production' ? '123456' : undefined,
+    };
+  }
+
+  /**
    * 调用微信 API 获取 openid
    */
   private async getWxOpenId(code: string): Promise<{ openid: string; session_key: string }> {
