@@ -3,32 +3,37 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  try {
+    console.log('Starting application...');
+    
+    const app = await NestFactory.create(AppModule);
 
-  // 全局前缀（排除根路径和健康检查）
-  app.setGlobalPrefix('api', {
-    exclude: ['/', 'health'],
-  });
+    // 全局前缀（排除根路径和健康检查）
+    app.setGlobalPrefix('api', {
+      exclude: ['/', 'health'],
+    });
 
-  // 全局管道
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-    }),
-  );
+    // 全局管道
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+      }),
+    );
 
-  // CORS
-  app.enableCors();
+    // CORS
+    app.enableCors();
 
-  // 云托管会注入 PORT 环境变量
-  const port = parseInt(process.env.PORT || '3000', 10);
-  
-  await app.listen(port, '0.0.0.0');
-  console.log(`Server running on port ${port}`);
+    // 云托管会注入 PORT 环境变量，默认 80
+    const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 80;
+    
+    console.log(`Attempting to listen on port ${port}...`);
+    await app.listen(port, '0.0.0.0');
+    console.log(`✅ Server successfully running on port ${port}`);
+  } catch (error) {
+    console.error('❌ Startup failed:', error);
+    process.exit(1);
+  }
 }
 
-bootstrap().catch((err) => {
-  console.error('Startup failed:', err);
-  process.exit(1);
-});
+bootstrap();

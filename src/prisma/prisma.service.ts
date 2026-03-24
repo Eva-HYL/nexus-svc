@@ -4,37 +4,26 @@ import { PrismaClient } from '@prisma/client';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
-  private connected = false;
 
   constructor() {
     super({
       log: ['error', 'warn'],
+      // 不在构造函数中连接
     });
+    this.logger.log('PrismaService created');
   }
 
   async onModuleInit() {
-    // 不在这里连接数据库，让请求时再连接
-    this.logger.log('Prisma service initialized (lazy connection)');
+    // 不在这里连接，延迟到第一次查询时
+    this.logger.log('PrismaService initialized (lazy connection)');
   }
 
   async onModuleDestroy() {
-    if (this.connected) {
+    try {
       await this.$disconnect();
       this.logger.log('Prisma disconnected');
-    }
-  }
-
-  // 确保连接
-  async ensureConnection() {
-    if (!this.connected) {
-      try {
-        await this.$connect();
-        this.connected = true;
-        this.logger.log('Database connected');
-      } catch (error) {
-        this.logger.error('Database connection failed:', error);
-        throw error;
-      }
+    } catch (error) {
+      this.logger.error('Disconnect error:', error);
     }
   }
 }
