@@ -1,4 +1,4 @@
-# 微信云托管 Dockerfile
+# Nexus 后端 - 微信云托管 Dockerfile
 FROM node:18-alpine AS builder
 
 WORKDIR /app
@@ -38,7 +38,7 @@ COPY --from=builder /app/prisma ./prisma
 
 # 设置环境变量
 ENV NODE_ENV=production
-ENV PORT=80
+# 云托管会注入 PORT 环境变量，应用需要监听此端口
 
 EXPOSE 80
 

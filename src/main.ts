@@ -28,9 +28,10 @@ async function bootstrap() {
   // CORS
   app.enableCors();
 
-  const port = process.env.APP_PORT || 3000;
+  // 云托管注入 PORT 环境变量，本地开发使用 APP_PORT 或 3000
+  const port = process.env.PORT || process.env.APP_PORT || 3000;
   await app.listen(port);
-  console.log(`🚀 elva-server running on: http://localhost:${port}/api`);
+  console.log(`🚀 nexus-server running on port: ${port}`);
 }
 
 bootstrap();
