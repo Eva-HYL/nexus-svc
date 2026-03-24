@@ -1,6 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Module, Controller, Get } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+
+// 数据库模块
 import { PrismaModule } from './prisma/prisma.module';
+
+// 业务模块
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { ClubModule } from './modules/club/club.module';
@@ -10,13 +14,24 @@ import { ReportModule } from './modules/report/report.module';
 import { FinanceModule } from './modules/finance/finance.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { ExportModule } from './modules/export/export.module';
-import { HealthModule } from './modules/health/health.module';
+
+@Controller()
+class RootController {
+  @Get()
+  index() {
+    return { name: 'nexus-server', version: '1.0.0', status: 'running' };
+  }
+
+  @Get('health')
+  health() {
+    return { status: 'ok', timestamp: new Date().toISOString() };
+  }
+}
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
-    HealthModule,
     AuthModule,
     UserModule,
     ClubModule,
@@ -27,5 +42,6 @@ import { HealthModule } from './modules/health/health.module';
     WalletModule,
     ExportModule,
   ],
+  controllers: [RootController],
 })
 export class AppModule {}

@@ -3,7 +3,8 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# 安装 pnpm
+# 安装构建依赖
+RUN apk add --no-cache openssl libc6-compat
 RUN npm install -g pnpm
 
 # 复制 package 文件
@@ -22,10 +23,15 @@ RUN npx prisma generate
 # 构建
 RUN pnpm build
 
-# 生产镜像
-FROM node:18-alpine AS runner
+# 生产镜像 - 使用 Debian 代替 Alpine 以获得更好的兼容性
+FROM node:18-slim AS runner
 
 WORKDIR /app
+
+# 安装运行时依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl \
+    && rm -rf /var/lib/apt/lists/*
 
 # 安装 pnpm
 RUN npm install -g pnpm
@@ -38,7 +44,6 @@ COPY --from=builder /app/prisma ./prisma
 
 # 设置环境变量
 ENV NODE_ENV=production
-# 云托管会注入 PORT 环境变量，应用需要监听此端口
 
 EXPOSE 80
 
