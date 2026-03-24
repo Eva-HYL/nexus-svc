@@ -1,10 +1,13 @@
 # Nexus 后端 - 微信云托管 Dockerfile
-FROM node:18-alpine AS builder
+FROM node:18-slim AS builder
 
 WORKDIR /app
 
 # 安装构建依赖
-RUN apk add --no-cache openssl libc6-compat
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN npm install -g pnpm
 
 # 复制 package 文件
@@ -17,13 +20,13 @@ RUN pnpm install --frozen-lockfile
 # 复制源码
 COPY . .
 
-# 生成 Prisma 客户端
+# 生成 Prisma 客户端（包含 Debian binaryTarget）
 RUN npx prisma generate
 
 # 构建
 RUN pnpm build
 
-# 生产镜像 - 使用 Debian 代替 Alpine 以获得更好的兼容性
+# 生产镜像
 FROM node:18-slim AS runner
 
 WORKDIR /app

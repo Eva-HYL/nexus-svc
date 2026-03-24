@@ -2,8 +2,9 @@
 // 陪玩公会管理系统数据模型
 
 generator client {
-  provider   = "prisma-client-js"
-  engineType = "library"
+  provider      = "prisma-client-js"
+  engineType    = "library"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "debian-openssl-3.0.x"]
 }
 
 datasource db {

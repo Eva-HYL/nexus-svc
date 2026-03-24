@@ -21,8 +21,8 @@ async function bootstrap() {
   // CORS
   app.enableCors();
 
-  // 获取端口
-  const port = process.env.PORT || 3000;
+  // 云托管会注入 PORT 环境变量
+  const port = parseInt(process.env.PORT || '3000', 10);
   
   await app.listen(port, '0.0.0.0');
   console.log(`Server running on port ${port}`);
