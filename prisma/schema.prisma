@@ -179,3 +179,63 @@ model Salary {
 
   @@map("salary")
 }
+
+// ==================== 钱包 ====================
+model Wallet {
+  id        BigInt   @id @default(autoincrement())
+  clubId    BigInt   @map("club_id")
+  userId    BigInt   @map("user_id")
+  balance   Decimal  @default(0) @db.Decimal(10, 2) // 可用余额
+  frozen    Decimal  @default(0) @db.Decimal(10, 2) // 冻结金额
+  // 状态: 1正常 2冻结
+  status    Int      @default(1) @db.TinyInt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  transactions WalletTransaction[]
+
+  @@unique([clubId, userId])
+  @@map("wallet")
+}
+
+// ==================== 钱包交易记录 ====================
+model WalletTransaction {
+  id         BigInt   @id @default(autoincrement())
+  walletId   BigInt   @map("wallet_id")
+  // 类型: 1充值 2代扣 3退款 4提现 5调账增加 6调账减少
+  type       Int      @db.TinyInt
+  amount     Decimal  @db.Decimal(10, 2)
+  balance    Decimal  @db.Decimal(10, 2) // 交易后余额
+  // 状态: 1成功 2失败 3处理中
+  status     Int      @default(1) @db.TinyInt
+  relateId   BigInt?  @map("relate_id") // 关联ID（报备ID/工资ID等）
+  relateType String?  @map("relate_type") @db.VarChar(50) // 关联类型
+  remark     String?  @db.VarChar(500)
+  createdBy  BigInt?  @map("created_by") // 操作人
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  wallet Wallet @relation(fields: [walletId], references: [id])
+
+  @@index([walletId, createdAt])
+  @@map("wallet_transaction")
+}
+
+// ==================== 俱乐部配置 ====================
+model ClubConfig {
+  id                    BigInt   @id @default(autoincrement())
+  clubId                BigInt   @unique @map("club_id")
+  // 积分设置
+  autoDeduct            Boolean  @default(false) @map("auto_deduct") // 自动代扣开关
+  minBalance            Decimal  @default(0) @map("min_balance") @db.Decimal(10, 2) // 最低余额门槛
+  // 审批设置
+  approvalMode          Int      @default(1) @map("approval_mode") @db.TinyInt // 1仅通知 2所属人 3管理员 4双签
+  // 提现设置
+  withdrawFeeRate       Decimal  @default(0) @map("withdraw_fee_rate") @db.Decimal(5, 4) // 提现手续费率
+  minWithdrawAmount     Decimal  @default(100) @map("min_withdraw_amount") @db.Decimal(10, 2) // 最低提现金额
+  // 其他设置
+  ext                   Json?
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("club_config")
+}
