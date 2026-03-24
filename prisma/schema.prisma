@@ -19,6 +19,7 @@ model User {
   nickname  String?  @db.VarChar(50)
   avatar    String?  @db.VarChar(500)
   status    Int      @default(1) @db.TinyInt // 1正常 2禁用
+  openid    String?  @db.VarChar(64) // 微信云开发 OpenID
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
