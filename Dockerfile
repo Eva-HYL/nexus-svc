@@ -47,6 +47,9 @@ COPY --from=builder /app/prisma ./prisma
 
 # 设置环境变量
 ENV NODE_ENV=production
+ENV PORT=80
+ENV DATABASE_URL=mysql://admin:database123245678.@172.17.0.13:3306/nexus
+ENV JWT_SECRET=nexus-jwt-secret-key-2024-production-32chars
 
 EXPOSE 80
 
