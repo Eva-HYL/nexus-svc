@@ -1,17 +1,29 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto, RefreshTokenDto } from './dto/login.dto';
+import { IsString, IsNotEmpty, Matches } from 'class-validator';
 
 class WxLoginDto {
+  @IsString()
+  @IsNotEmpty()
   code: string;
 }
 
 class SmsLoginDto {
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^1[3-9]\d{9}$/, { message: '手机号格式不正确' })
   phone: string;
+
+  @IsString()
+  @IsNotEmpty()
   code: string;
 }
 
 class SendSmsDto {
+  @IsString()
+  @IsNotEmpty({ message: '手机号不能为空' })
+  @Matches(/^1[3-9]\d{9}$/, { message: '手机号格式不正确' })
   phone: string;
 }
 

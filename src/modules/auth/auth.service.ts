@@ -162,6 +162,9 @@ export class AuthService {
    * 发送验证码
    */
   async sendSmsCode(phone: string) {
+    // 去除空格
+    phone = phone?.trim() || '';
+    
     // 验证手机号格式
     if (!/^1[3-9]\d{9}$/.test(phone)) {
       throw new BadRequestException('手机号格式不正确');
