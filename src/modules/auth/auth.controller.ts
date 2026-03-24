@@ -2,6 +2,10 @@ import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto, RefreshTokenDto } from './dto/login.dto';
 
+class WxLoginDto {
+  code: string;
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -23,6 +27,16 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  /**
+   * 微信一键登录
+   * POST /api/auth/wx-login
+   */
+  @Post('wx-login')
+  @HttpCode(HttpStatus.OK)
+  async wxLogin(@Body() dto: WxLoginDto) {
+    return this.authService.wxLogin(dto.code);
   }
 
   /**
