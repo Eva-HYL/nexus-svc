@@ -1,12 +1,16 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ProjectService } from '../project/project.service';
+import { WalletService } from '../wallet/wallet.service';
 
 @Injectable()
 export class ReportService {
+  private readonly logger = new Logger(ReportService.name);
+
   constructor(
     private prisma: PrismaService,
     private projectService: ProjectService,
+    private walletService: WalletService,
   ) {}
 
   async submit(memberId: bigint, clubId: bigint, dto: {
@@ -29,6 +33,21 @@ export class ReportService {
       : baseAmount * (Number(project.commissionValue) / 100);
 
     const actualAmount = baseAmount - commission;
+
+    // 检查是否启用自动代扣
+    const clubConfig = await this.prisma.clubConfig.findUnique({
+      where: { clubId },
+    });
+
+    const autoDeduct = clubConfig?.autoDeduct ?? false;
+    
+    // 如果启用自动代扣，检查余额
+    if (autoDeduct && commission > 0) {
+      const hasBalance = await this.walletService.checkBalance(clubId, memberId, commission);
+      if (!hasBalance) {
+        throw new BadRequestException('积分余额不足，请先充值');
+      }
+    }
 
     // 创建报备（事务）
     return this.prisma.$transaction(async (tx) => {
@@ -60,6 +79,23 @@ export class ReportService {
           status: 1,
         },
       });
+
+      // 如果启用自动代扣，执行扣款
+      if (autoDeduct && commission > 0) {
+        try {
+          await this.walletService.deduct(
+            clubId,
+            memberId,
+            commission,
+            report.id,
+            'report'
+          );
+          this.logger.log(`报备自动代扣: report=${report.id}, commission=${commission}`);
+        } catch (err) {
+          this.logger.error(`报备代扣失败: ${err.message}`);
+          // 代扣失败不阻塞报备创建，但记录日志
+        }
+      }
 
       return report;
     });

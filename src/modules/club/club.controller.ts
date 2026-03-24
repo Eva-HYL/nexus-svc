@@ -1,9 +1,10 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, ForbiddenException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ClubService } from './club.service';
+import { ClubConfigService } from './club-config.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ClubRole, MemberStatus } from '../../common/constants';
-import { IsString, IsNotEmpty, IsOptional, IsNumber, Min, IsInt, IsPositive } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, Min, IsInt, IsPositive, IsBoolean, Max } from 'class-validator';
 
 // DTO 定义
 class CreateClubDto {
@@ -45,10 +46,41 @@ class TransferClubDto {
   newOwnerId: number;
 }
 
+class UpdateConfigDto {
+  @IsBoolean()
+  @IsOptional()
+  autoDeduct?: boolean;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  minBalance?: number;
+
+  @IsNumber()
+  @Min(1)
+  @Max(4)
+  @IsOptional()
+  approvalMode?: number;
+
+  @IsNumber()
+  @Min(0)
+  @Max(1)
+  @IsOptional()
+  withdrawFeeRate?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  minWithdrawAmount?: number;
+}
+
 @Controller('club')
 @UseGuards(AuthGuard('jwt'))
 export class ClubController {
-  constructor(private clubService: ClubService) {}
+  constructor(
+    private clubService: ClubService,
+    private clubConfigService: ClubConfigService,
+  ) {}
 
   /**
    * 创建俱乐部
@@ -126,5 +158,34 @@ export class ClubController {
     @CurrentUser('id') userId: string,
   ) {
     return this.clubService.quit(BigInt(id), BigInt(userId));
+  }
+
+  /**
+   * 获取俱乐部配置
+   * GET /api/club/:id/config
+   */
+  @Get(':id/config')
+  async getConfig(@Param('id') id: string) {
+    return this.clubConfigService.getConfig(BigInt(id));
+  }
+
+  /**
+   * 更新俱乐部配置
+   * PUT /api/club/:id/config
+   */
+  @Put(':id/config')
+  async updateConfig(
+    @Param('id') id: string,
+    @Body() dto: UpdateConfigDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    // TODO: 添加权限检查，只有管理员可以修改配置
+    return this.clubConfigService.updateConfig(BigInt(id), {
+      autoDeduct: dto.autoDeduct,
+      minBalance: dto.minBalance,
+      approvalMode: dto.approvalMode,
+      withdrawFeeRate: dto.withdrawFeeRate,
+      minWithdrawAmount: dto.minWithdrawAmount,
+    });
   }
 }
