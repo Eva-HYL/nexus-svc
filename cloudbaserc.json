@@ -1,0 +1,29 @@
+{
+  "version": "2.0",
+  "$schema": "https://framework-1258016615.tcloudbaseapp.com/schema/latest.json",
+  "functionRoot": "./functions",
+  "functions": [],
+  "framework": {
+    "name": "nestjs",
+    "plugins": {}
+  },
+  "services": [
+    {
+      "name": "nexus-server",
+      "type": "container",
+      "containerPort": 80,
+      "cpu": 0.5,
+      "mem": 512,
+      "minNum": 0,
+      "maxNum": 5,
+      "dockerfilePath": "./Dockerfile",
+      "envVariables": {
+        "NODE_ENV": "production",
+        "DATABASE_URL": "${DATABASE_URL}",
+        "JWT_SECRET": "${JWT_SECRET}",
+        "WECHAT_APPID": "${WECHAT_APPID}",
+        "WECHAT_SECRET": "${WECHAT_SECRET}"
+      }
+    }
+  ]
+}
