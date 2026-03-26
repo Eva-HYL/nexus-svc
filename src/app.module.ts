@@ -14,6 +14,8 @@ import { ReportModule } from './modules/report/report.module';
 import { FinanceModule } from './modules/finance/finance.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { ExportModule } from './modules/export/export.module';
+import { NoticeModule } from './modules/notice/notice.module';
+import { RankingModule } from './modules/ranking/ranking.module';
 
 @Controller()
 class RootController {
@@ -41,6 +43,8 @@ class RootController {
     FinanceModule,
     WalletModule,
     ExportModule,
+    NoticeModule,
+    RankingModule,
   ],
   controllers: [RootController],
 })
