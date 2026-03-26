@@ -1,0 +1,29 @@
+{
+  "version": "1.0",
+  "envId": "cloud1-0gfwfzyh9c423958",
+  "function": {
+    "name": "nexus-server",
+    "runtimes": "Nodejs16.13",
+    "timeout": 30,
+    "envVariables": {
+      "NODE_ENV": "production",
+      "DATABASE_URL": "mysql://admin:database12345678.@sh-cynosdbmysql-grp-kysz4ziw.sql.tencentcdb.com:27663/nexus",
+      "JWT_SECRET": "nexus-jwt-secret-key-2024-production-32chars",
+      "APP_PORT": "3000"
+    }
+  },
+  "service": {
+    "name": "nexus-server",
+    "type": "cloudrun",
+    "config": {
+      "minNum": 0,
+      "maxNum": 5,
+      "cpu": 1,
+      "mem": 2048,
+      "policyType": "cpu",
+      "policyThreshold": 80,
+      "vpcId": "",
+      "subnetId": ""
+    }
+  }
+}
