@@ -16,6 +16,9 @@ import { WalletModule } from './modules/wallet/wallet.module';
 import { ExportModule } from './modules/export/export.module';
 import { NoticeModule } from './modules/notice/notice.module';
 import { RankingModule } from './modules/ranking/ranking.module';
+import { FineModule } from './modules/fine/fine.module';
+import { GroupFeeModule } from './modules/group-fee/group-fee.module';
+import { DepositModule } from './modules/deposit/deposit.module';
 
 @Controller()
 class RootController {
@@ -45,6 +48,9 @@ class RootController {
     ExportModule,
     NoticeModule,
     RankingModule,
+    FineModule,
+    GroupFeeModule,
+    DepositModule,
   ],
   controllers: [RootController],
 })
