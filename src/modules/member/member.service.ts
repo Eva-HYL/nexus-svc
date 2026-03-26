@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ClubRole, MemberStatus } from '../../common/constants';
+import { ReportStatus, MemberStatus, MemberRole } from '@prisma/client';
 
 @Injectable()
 export class MemberService {
@@ -65,7 +65,7 @@ export class MemberService {
     });
 
     if (existing) {
-      if (existing.status === MemberStatus.ACTIVE) {
+      if (existing.status === MemberStatus.IDLE) {
         throw new BadRequestException('您已是该俱乐部的成员');
       }
       if (existing.status === MemberStatus.PENDING) {
@@ -79,7 +79,7 @@ export class MemberService {
       create: { 
         clubId, 
         userId, 
-        role: ClubRole.MEMBER, 
+        role: MemberRole.MEMBER, 
         status: MemberStatus.PENDING 
       },
       update: { status: MemberStatus.PENDING },
@@ -92,7 +92,7 @@ export class MemberService {
   /**
    * 审批通过成员申请
    */
-  async approve(clubId: bigint, userId: bigint, approverId: bigint, role: ClubRole = ClubRole.MEMBER) {
+  async approve(clubId: bigint, userId: bigint, approverId: bigint, role: MemberRole = MemberRole.MEMBER) {
     const membership = await this.prisma.clubMember.findUnique({
       where: { clubId_userId: { clubId, userId } },
     });
@@ -105,7 +105,7 @@ export class MemberService {
     const result = await this.prisma.clubMember.update({
       where: { clubId_userId: { clubId, userId } },
       data: { 
-        status: MemberStatus.ACTIVE, 
+        status: MemberStatus.IDLE, 
         role,
         joinedAt: new Date(),
       },
@@ -130,7 +130,7 @@ export class MemberService {
 
     const result = await this.prisma.clubMember.update({
       where: { clubId_userId: { clubId, userId } },
-      data: { status: MemberStatus.REJECTED },
+      data: { status: MemberStatus.LEFT },
     });
 
     this.logger.log(`成员申请拒绝: user ${userId} rejected by ${approverId}, reason: ${reason || 'N/A'}`);
@@ -148,7 +148,7 @@ export class MemberService {
         status: MemberStatus.PENDING,
       },
       data: { 
-        status: MemberStatus.ACTIVE,
+        status: MemberStatus.IDLE,
         joinedAt: new Date(),
       },
     });
@@ -168,7 +168,7 @@ export class MemberService {
     if (!member) throw new NotFoundException('成员不存在');
 
     // 不能修改创始人的角色
-    if (member.role === ClubRole.FOUNDER) {
+    if (member.role === MemberRole.OWNER) {
       throw new ForbiddenException('不能修改创始人的角色');
     }
 
@@ -177,13 +177,13 @@ export class MemberService {
       where: { clubId_userId: { clubId, userId: operatorId } },
     });
 
-    if (newRole === ClubRole.ADMIN && operator?.role !== ClubRole.FOUNDER) {
+    if (newRole === 2 && operator?.role !== 1) {
       throw new ForbiddenException('只有创始人可以设置管理员');
     }
 
     return this.prisma.clubMember.update({
       where: { clubId_userId: { clubId, userId } },
-      data: { role: newRole },
+      data: { role: newRole as unknown as MemberRole },
     });
   }
 
@@ -198,13 +198,13 @@ export class MemberService {
     if (!member) throw new NotFoundException('成员不存在');
 
     // 不能移除创始人
-    if (member.role === ClubRole.FOUNDER) {
+    if (member.role === MemberRole.OWNER) {
       throw new ForbiddenException('不能移除创始人');
     }
 
     const result = await this.prisma.clubMember.update({
       where: { clubId_userId: { clubId, userId } },
-      data: { status: MemberStatus.QUIT },
+      data: { status: MemberStatus.LEFT },
     });
 
     this.logger.log(`成员移除: user ${userId} removed by ${operatorId}`);
@@ -214,20 +214,20 @@ export class MemberService {
   /**
    * 直接添加成员（管理员操作，无需审批）
    */
-  async addDirectly(clubId: bigint, userId: bigint, role: ClubRole = ClubRole.MEMBER, operatorId: bigint) {
+  async addDirectly(clubId: bigint, userId: bigint, role: MemberRole = MemberRole.MEMBER, operatorId: bigint) {
     // 检查是否已存在
     const existing = await this.prisma.clubMember.findUnique({
       where: { clubId_userId: { clubId, userId } },
     });
 
-    if (existing && existing.status === MemberStatus.ACTIVE) {
+    if (existing && existing.status === MemberStatus.IDLE) {
       throw new BadRequestException('该用户已是俱乐部成员');
     }
 
     return this.prisma.clubMember.upsert({
       where: { clubId_userId: { clubId, userId } },
-      create: { clubId, userId, role, status: MemberStatus.ACTIVE },
-      update: { status: MemberStatus.ACTIVE, role },
+      create: { clubId, userId, role, status: MemberStatus.IDLE },
+      update: { status: MemberStatus.IDLE, role },
     });
   }
 
@@ -241,7 +241,7 @@ export class MemberService {
       where: { clubId_userId: { clubId, userId: operatorId } },
     });
 
-    if (!operator || operator.status !== MemberStatus.ACTIVE) {
+    if (!operator || operator.status !== MemberStatus.IDLE) {
       throw new ForbiddenException('无权限生成邀请码');
     }
 

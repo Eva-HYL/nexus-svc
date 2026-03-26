@@ -164,8 +164,8 @@ export enum Permission {
 
 // ==================== 默认角色权限映射 ====================
 export const DEFAULT_ROLE_PERMISSIONS: Record<ClubRole, Permission[]> = {
-  [ClubRole.FOUNDER]: Object.values(Permission), // 创始人拥有所有权限
-  [ClubRole.ADMIN]: [
+  [1]: Object.values(Permission), // 创始人拥有所有权限
+  [2]: [
     Permission.MEMBER_INVITE,
     Permission.MEMBER_APPROVE,
     Permission.MEMBER_REMOVE,
@@ -181,13 +181,13 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<ClubRole, Permission[]> = {
     Permission.DATA_EXPORT,
     Permission.DATA_STATISTICS,
   ],
-  [ClubRole.LEADER]: [
+  [3]: [
     Permission.REPORT_APPROVE,
     Permission.REPORT_REJECT,
     Permission.REPORT_VIEW_ALL,
     Permission.FINANCE_VIEW,
   ],
-  [ClubRole.MEMBER]: [
+  [4]: [
     Permission.FINANCE_VIEW,
   ],
 };

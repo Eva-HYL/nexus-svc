@@ -17,83 +17,83 @@ datasource db {
 
 /// 报备状态
 enum ReportStatus {
-  PENDING // 待审批
-  APPROVED // 已通过
-  REJECTED // 已驳回
+  PENDING   // 待审批
+  APPROVED  // 已通过
+  REJECTED  // 已驳回
   CANCELLED // 已撤销
 }
 
 /// 报备类型
 enum ReportType {
   PROJECT // 项目单（游戏）
-  GIFT // 礼物单
-  POINT // 点单
+  GIFT    // 礼物单
+  POINT   // 点单
 }
 
 /// 订单类型
 enum OrderType {
   RECEIVER // 接单（主动）
-  POINT // 点单（被动）
+  POINT    // 点单（被动）
 }
 
 /// 成员角色
 enum MemberRole {
-  OWNER // 创始人
-  ADMIN // 管理员
-  MEMBER // 成员
-  LEADER // 组长
+  OWNER   // 创始人
+  ADMIN   // 管理员
+  MEMBER  // 成员
+  LEADER  // 组长
 }
 
 /// 成员状态
 enum MemberStatus {
-  IDLE // 空闲
-  BUSY // 忙碌
-  REST // 休息
-  LEAVE // 请假
-  PENDING // 待审核
-  LEFT // 已退出
+  IDLE       // 空闲
+  BUSY       // 忙碌
+  REST       // 休息
+  LEAVE      // 请假
+  PENDING    // 待审核
+  LEFT       // 已退出
 }
 
 /// 成员类型
 enum MemberType {
-  FULL_TIME // 全职
-  PART_TIME // 兼职
-  TEMP // 临时
+  FULL_TIME  // 全职
+  PART_TIME  // 兼职
+  TEMP       // 临时
 }
 
 /// 公告类型
 enum NoticeType {
-  NORMAL // 普通
+  NORMAL   // 普通
   IMPORTANT // 重要
-  URGENT // 紧急
+  URGENT   // 紧急
 }
 
 /// 罚款状态
 enum FineStatus {
-  PENDING // 待缴纳
-  PAID // 已缴纳
-  WAIVED // 已豁免
-  OVERDUE // 逾期
+  PENDING    // 待缴纳
+  PAID       // 已缴纳
+  WAIVED     // 已豁免
+  OVERDUE    // 逾期
 }
 
 /// 存单状态
 enum DepositStatus {
-  FROZEN // 冻结
-  IN_USE // 使用中
-  USED_UP // 已用完
-  REFUNDED // 已退还
-  EXPIRED // 已过期
+  FROZEN     // 冻结
+  IN_USE     // 使用中
+  USED_UP    // 已用完
+  REFUNDED   // 已退还
+  EXPIRED    // 已过期
 }
 
 /// 积分交易类型
 enum PointTransactionType {
-  RECHARGE // 充值
-  DEDUCT // 代扣
-  REFUND // 退款
-  TRANSFER // 转账
-  EXPENSE // 消费
-  REWARD // 奖励
-  ADJUST // 调账
+  RECHARGE   // 充值
+  DEDUCT     // 代扣
+  REFUND     // 退款
+  TRANSFER   // 转账
+  EXPENSE    // 消费
+  REWARD     // 奖励
+  ADJUST     // 调账
 }
 
 // ==================== 用户 ====================
@@ -134,7 +134,7 @@ model Club {
   // 最大成员数
   maxMembers  Int?     @default(100) @map("max_members")
   status      Int      @default(1) // 1 正常 2 禁用
-  ext         Json? // 扩展字段（预留）
+  ext         Json?    // 扩展字段（预留）
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -159,29 +159,29 @@ model Club {
 // ==================== 俱乐部成员 ====================
 
 model ClubMember {
-  id         BigInt       @id @default(autoincrement())
-  clubId     BigInt       @map("club_id")
-  userId     BigInt       @map("user_id")
+  id         BigInt   @id @default(autoincrement())
+  clubId     BigInt   @map("club_id")
+  userId     BigInt   @map("user_id")
   // 角色
-  role       MemberRole   @default(MEMBER)
+  role       MemberRole @default(MEMBER)
   // 状态
   status     MemberStatus @default(IDLE)
   // 成员类型
-  memberType MemberType   @default(PART_TIME)
+  memberType MemberType @default(PART_TIME)
   // 等级：1 初级 2 中级 3 高级 4 王牌
-  level      Int          @default(1)
+  level      Int      @default(1)
   // 单价（元/小时）
-  basePrice  Decimal      @default(0) @map("base_price") @db.Decimal(10, 2)
+  basePrice  Decimal  @default(0) @map("base_price") @db.Decimal(10, 2)
   // 自动接单开关
-  autoAccept Boolean      @default(true) @map("auto_accept")
+  autoAccept Boolean  @default(true) @map("auto_accept")
   // 所属组
-  groupId    String?      @map("group_id") @db.VarChar(64)
-  ext        Json? // 扩展字段（预留）
-  joinedAt   DateTime     @default(now()) @map("joined_at")
-  createdAt  DateTime     @default(now()) @map("created_at")
-  updatedAt  DateTime     @updatedAt @map("updated_at")
+  groupId    String?  @map("group_id") @db.VarChar(64)
+  ext        Json?    // 扩展字段（预留）
+  joinedAt   DateTime @default(now()) @map("joined_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
   // 软删除
-  deletedAt  DateTime?    @map("deleted_at")
+  deletedAt  DateTime? @map("deleted_at")
 
   club        Club          @relation(fields: [clubId], references: [id])
   user        User          @relation(fields: [userId], references: [id])
@@ -189,8 +189,6 @@ model ClubMember {
   deposits    Deposit[]
   earnings    Earning[]
   salaries    Salary[]
-  GroupFee    GroupFee[]
-  ClubRanking ClubRanking[]
 
   @@unique([clubId, userId])
   @@index([clubId, status])
@@ -226,76 +224,74 @@ model Project {
 // ==================== 报备 ====================
 
 model Report {
-  id        BigInt @id @default(autoincrement())
-  clubId    BigInt @map("club_id")
-  memberId  BigInt @map("member_id") // 接单人/创建人
-  projectId BigInt @map("project_id")
-
+  id           BigInt      @id @default(autoincrement())
+  clubId       BigInt      @map("club_id")
+  memberId     BigInt      @map("member_id") // 接单人/创建人
+  projectId    BigInt      @map("project_id")
+  
   // 报备类型
-  reportType ReportType @default(PROJECT)
-
+  reportType   ReportType  @default(PROJECT)
+  
   // 订单类型
-  orderType OrderType @default(RECEIVER)
-
+  orderType    OrderType   @default(RECEIVER)
+  
   // 所属人（点单特有）
-  ownerId BigInt? @map("owner_id")
-
+  ownerId      BigInt?     @map("owner_id")
+  
   // 群组关联
-  groupId   BigInt? @map("group_id")
-  groupName String? @map("group_name") @db.VarChar(200)
-
+  groupId      BigInt?     @map("group_id")
+  groupName    String?     @map("group_name") @db.VarChar(200)
+  
   // 老板信息
-  bossName    String  @map("boss_name") @db.VarChar(100)
-  bossContact String? @map("boss_contact") @db.VarChar(100)
-
+  bossName     String      @map("boss_name") @db.VarChar(100)
+  bossContact  String?     @map("boss_contact") @db.VarChar(100)
+  
   // 数量/时长
-  duration       Int? // 时长（分钟）
-  quantity       Int? // 数量
-  convertedCount Int  @default(0) @map("converted_count") // 折算单量
-
+  duration     Int?        // 时长（分钟）
+  quantity     Int?        // 数量
+  convertedCount Int       @default(0) @map("converted_count") // 折算单量
+  
   // 金额
-  amount       Decimal @default(0) @db.Decimal(10, 2)
-  commission   Decimal @default(0) @db.Decimal(10, 2)
-  rebate       Decimal @default(0) @db.Decimal(10, 2) // 返点（点单特有）
-  actualAmount Decimal @default(0) @map("actual_amount") @db.Decimal(10, 2)
-
+  amount       Decimal     @default(0) @db.Decimal(10, 2)
+  commission   Decimal     @default(0) @db.Decimal(10, 2)
+  rebate       Decimal     @default(0) @db.Decimal(10, 2) // 返点（点单特有）
+  actualAmount Decimal     @default(0) @map("actual_amount") @db.Decimal(10, 2)
+  
   // 状态
-  status ReportStatus @default(PENDING)
-
+  status       ReportStatus @default(PENDING)
+  
   // 备注
-  remark String? @db.VarChar(500)
-
+  remark       String?     @db.VarChar(500)
+  
   // 预存/存单使用
-  useDeposit Boolean @default(false) @map("use_deposit")
-  depositId  BigInt? @map("deposit_id")
-
+  useDeposit   Boolean     @default(false) @map("use_deposit")
+  depositId    BigInt?     @map("deposit_id")
+  
   // 审批
   approvalFlowId String?   @map("approval_flow_id") @db.VarChar(64)
   approvalStep   Int?      @map("approval_step")
-  approvedBy     BigInt?   @map("approved_by")
-  approvedAt     DateTime? @map("approved_at")
-
+  approvedBy   BigInt?     @map("approved_by")
+  approvedAt   DateTime?   @map("approved_at")
+  
   // 时间
-  startTime DateTime? @map("start_time")
-  endTime   DateTime? @map("end_time")
-
+  startTime    DateTime?   @map("start_time")
+  endTime      DateTime?   @map("end_time")
+  
   // 幂等性支持
-  requestId String? @unique @map("request_id") @db.VarChar(64)
-
-  ext       Json?
-  createdBy BigInt    @map("created_by")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  requestId    String?     @unique @map("request_id") @db.VarChar(64)
+  
+  ext          Json?
+  createdBy    BigInt      @map("created_by")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
   // 软删除
-  deletedAt DateTime? @map("deleted_at")
+  deletedAt    DateTime?   @map("deleted_at")
 
-  club     Club      @relation(fields: [clubId], references: [id])
-  project  Project   @relation(fields: [projectId], references: [id])
-  creator  User      @relation("ReportCreator", fields: [createdBy], references: [id])
-  approver User?     @relation("ReportApprover", fields: [approvedBy], references: [id])
+  club     Club     @relation(fields: [clubId], references: [id])
+  project  Project  @relation(fields: [projectId], references: [id])
+  creator  User     @relation("ReportCreator", fields: [createdBy], references: [id])
+  approver User?    @relation("ReportApprover", fields: [approvedBy], references: [id])
   earnings Earning[]
-  Group    Group?    @relation(fields: [groupId], references: [id])
-  Deposit  Deposit?  @relation(fields: [depositId], references: [id])
 
   @@index([clubId, status, createdAt])
   @@index([clubId, memberId, createdAt])
@@ -311,24 +307,23 @@ model Report {
 // ==================== 收入明细 ====================
 
 model Earning {
-  id        BigInt   @id @default(autoincrement())
-  clubId    BigInt   @map("club_id")
-  memberId  BigInt   @map("member_id")
-  reportId  BigInt?  @map("report_id")
+  id       BigInt   @id @default(autoincrement())
+  clubId   BigInt   @map("club_id")
+  memberId BigInt   @map("member_id")
+  reportId BigInt?  @map("report_id")
   // 类型：1 收入 2 返点 3 扣减
-  type      Int      @default(1)
-  amount    Decimal  @db.Decimal(10, 2)
+  type     Int      @default(1)
+  amount   Decimal  @db.Decimal(10, 2)
   // 状态：1 待发放 2 已发放 3 已取消
-  status    Int      @default(1)
-  salaryId  BigInt?  @map("salary_id")
-  remark    String?  @db.VarChar(500)
+  status   Int      @default(1)
+  salaryId BigInt?  @map("salary_id")
+  remark   String?  @db.VarChar(500)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  club   Club       @relation(fields: [clubId], references: [id])
-  report Report?    @relation(fields: [reportId], references: [id])
+  club   Club    @relation(fields: [clubId], references: [id])
+  report Report? @relation(fields: [reportId], references: [id])
   member ClubMember @relation(fields: [memberId], references: [id])
-  Salary Salary?    @relation(fields: [salaryId], references: [id])
 
   @@index([clubId, memberId, createdAt])
   @@map("earning")
@@ -359,8 +354,8 @@ model Salary {
   // 软删除
   deletedAt       DateTime? @map("deleted_at")
 
-  club     Club       @relation(fields: [clubId], references: [id])
-  payer    User?      @relation("SalaryPayer", fields: [paidBy], references: [id])
+  club     Club      @relation(fields: [clubId], references: [id])
+  payer    User?     @relation("SalaryPayer", fields: [paidBy], references: [id])
   earnings Earning[]
   member   ClubMember @relation(fields: [memberId], references: [id])
 
@@ -371,26 +366,26 @@ model Salary {
 // ==================== 钱包 ====================
 
 model Wallet {
-  id                  BigInt   @id @default(autoincrement())
-  clubId              BigInt   @map("club_id")
-  userId              BigInt   @map("user_id")
+  id        BigInt   @id @default(autoincrement())
+  clubId    BigInt   @map("club_id")
+  userId    BigInt   @map("user_id")
   // 资金相关
-  balance             Decimal  @default(0) @db.Decimal(10, 2) // 可用余额
-  frozen              Decimal  @default(0) @db.Decimal(10, 2) // 冻结金额
+  balance   Decimal  @default(0) @db.Decimal(10, 2) // 可用余额
+  frozen    Decimal  @default(0) @db.Decimal(10, 2) // 冻结金额
   // 积分相关
-  points              Decimal  @default(0) @db.Decimal(10, 2) // 积分余额
-  totalPointsReceived Decimal  @default(0) @map("total_points_received") @db.Decimal(12, 2)
-  totalPointsSpent    Decimal  @default(0) @map("total_points_spent") @db.Decimal(12, 2)
+  points    Decimal  @default(0) @db.Decimal(10, 2) // 积分余额
+  totalPointsReceived Decimal @default(0) @map("total_points_received") @db.Decimal(12, 2)
+  totalPointsSpent    Decimal @default(0) @map("total_points_spent") @db.Decimal(12, 2)
   // 状态：1 正常 2 冻结
-  status              Int      @default(1)
+  status    Int      @default(1)
   // 乐观锁版本号
-  version             Int      @default(0) @db.Int
-  createdAt           DateTime @default(now()) @map("created_at")
-  updatedAt           DateTime @updatedAt @map("updated_at")
+  version   Int      @default(0) @db.Int
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   transactions WalletTransaction[]
-  club         Club                @relation(fields: [clubId], references: [id])
-  user         User                @relation(fields: [userId], references: [id])
+  club         Club @relation(fields: [clubId], references: [id])
+  user         User @relation(fields: [userId], references: [id])
 
   @@unique([clubId, userId])
   @@map("wallet")
@@ -402,7 +397,7 @@ model WalletTransaction {
   id         BigInt   @id @default(autoincrement())
   walletId   BigInt   @map("wallet_id")
   // 类型：1 充值 2 代扣 3 退款 4 提现 5 调账增加 6 调账减少
-  type       Int
+  type       Int     
   amount     Decimal  @db.Decimal(10, 2)
   balance    Decimal  @db.Decimal(10, 2) // 交易后余额
   // 状态：1 成功 2 失败 3 处理中
@@ -422,24 +417,24 @@ model WalletTransaction {
 // ==================== 俱乐部配置 ====================
 
 model ClubConfig {
-  id                     BigInt   @id @default(autoincrement())
-  clubId                 BigInt   @unique @map("club_id")
+  id                    BigInt   @id @default(autoincrement())
+  clubId                BigInt   @unique @map("club_id")
   // 积分设置
-  autoDeduct             Boolean  @default(false) @map("auto_deduct") // 自动代扣开关
-  minBalance             Decimal  @default(0) @map("min_balance") @db.Decimal(10, 2) // 最低余额门槛
+  autoDeduct            Boolean  @default(false) @map("auto_deduct") // 自动代扣开关
+  minBalance            Decimal  @default(0) @map("min_balance") @db.Decimal(10, 2) // 最低余额门槛
   // 审批设置
-  approvalMode           Int      @default(1) @map("approval_mode") // 1 仅通知 2 所属人 3 管理员 4 双签
+  approvalMode          Int      @default(1) @map("approval_mode") // 1 仅通知 2 所属人 3 管理员 4 双签
   // 提现设置
-  withdrawFeeRate        Decimal  @default(0) @map("withdraw_fee_rate") @db.Decimal(5, 4) // 提现手续费率
-  minWithdrawAmount      Decimal  @default(100) @map("min_withdraw_amount") @db.Decimal(10, 2) // 最低提现金额
+  withdrawFeeRate       Decimal  @default(0) @map("withdraw_fee_rate") @db.Decimal(5, 4) // 提现手续费率
+  minWithdrawAmount     Decimal  @default(100) @map("min_withdraw_amount") @db.Decimal(10, 2) // 最低提现金额
   // 点单分成设置
-  pointOrderOwnerRate    Decimal  @default(30) @map("point_order_owner_rate") @db.Decimal(5, 2) // 所属人比例
-  pointOrderReceiverRate Decimal  @default(60) @map("point_order_receiver_rate") @db.Decimal(5, 2) // 接单人比例
-  pointOrderClubRate     Decimal  @default(10) @map("point_order_club_rate") @db.Decimal(5, 2) // 俱乐部比例
+  pointOrderOwnerRate   Decimal  @default(30) @map("point_order_owner_rate") @db.Decimal(5, 2) // 所属人比例
+  pointOrderReceiverRate Decimal @default(60) @map("point_order_receiver_rate") @db.Decimal(5, 2) // 接单人比例
+  pointOrderClubRate    Decimal  @default(10) @map("point_order_club_rate") @db.Decimal(5, 2) // 俱乐部比例
   // 其他设置
-  ext                    Json?
-  createdAt              DateTime @default(now()) @map("created_at")
-  updatedAt              DateTime @updatedAt @map("updated_at")
+  ext                   Json?
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
 
   club Club @relation(fields: [clubId], references: [id])
 
@@ -474,15 +469,15 @@ model ClubNotice {
 // ==================== 群组 ====================
 
 model Group {
-  id          BigInt    @id @default(autoincrement())
-  clubId      BigInt    @map("club_id")
-  name        String    @db.VarChar(200) // 群聊名称
-  description String?   @db.Text
+  id          BigInt   @id @default(autoincrement())
+  clubId      BigInt   @map("club_id")
+  name        String   @db.VarChar(200) // 群聊名称
+  description String?  @db.Text
   // 群类型：1 内部群 2 老板群 3 项目群
-  type        Int       @default(1)
-  status      Int       @default(1) // 1 启用 2 禁用
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  type        Int      @default(1)
+  status      Int      @default(1) // 1 启用 2 禁用
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
   // 软删除
   deletedAt   DateTime? @map("deleted_at")
 
@@ -497,13 +492,12 @@ model Group {
 // ==================== 群组成员 ====================
 
 model GroupMember {
-  id       BigInt   @id @default(autoincrement())
-  groupId  BigInt   @map("group_id")
-  memberId BigInt   @map("member_id")
+  id        BigInt   @id @default(autoincrement())
+  groupId   BigInt   @map("group_id")
+  memberId  BigInt   @map("member_id")
   // 角色：1 群主 2 管理员 3 成员
-  role     Int      @default(3)
-  joinedAt DateTime @default(now()) @map("joined_at")
-  Group    Group    @relation(fields: [groupId], references: [id])
+  role      Int      @default(3)
+  joinedAt  DateTime @default(now()) @map("joined_at")
 
   @@unique([groupId, memberId])
   @@map("group_member")
@@ -512,31 +506,29 @@ model GroupMember {
 // ==================== 罚款 ====================
 
 model Fine {
-  id        BigInt     @id @default(autoincrement())
-  clubId    BigInt     @map("club_id")
-  memberId  BigInt     @map("member_id")
-  amount    Decimal    @db.Decimal(10, 2)
-  reason    String     @db.VarChar(500)
+  id          BigInt     @id @default(autoincrement())
+  clubId      BigInt     @map("club_id")
+  memberId    BigInt     @map("member_id")
+  amount      Decimal    @db.Decimal(10, 2)
+  reason      String     @db.VarChar(500)
   // 类型：1 违规 2 迟到 3 投诉 4 其他
-  type      Int        @default(1)
+  type        Int        @default(1)
   // 状态
-  status    FineStatus @default(PENDING)
-  issuedBy  BigInt     @map("issued_by") // 开单人
-  dueDate   DateTime?  @map("due_date") @db.Date
-  paidAt    DateTime?  @map("paid_at")
+  status      FineStatus @default(PENDING)
+  issuedBy    BigInt     @map("issued_by") // 开单人
+  dueDate     DateTime?  @map("due_date") @db.Date
+  paidAt      DateTime?  @map("paid_at")
   // 支付方式：1 微信 2 支付宝 3 钱包 4 现金
-  payMethod Int        @default(1) @map("pay_method")
-  paidBy    BigInt?    @map("paid_by") // 收款人
-  remark    String?    @db.VarChar(500)
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
+  payMethod   Int        @default(1) @map("pay_method")
+  paidBy      BigInt?    @map("paid_by") // 收款人
+  remark      String?    @db.VarChar(500)
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
   // 软删除
-  deletedAt DateTime?  @map("deleted_at")
+  deletedAt   DateTime?  @map("deleted_at")
 
-  club   Club       @relation(fields: [clubId], references: [id])
+  club   Club @relation(fields: [clubId], references: [id])
   member ClubMember @relation(fields: [memberId], references: [id])
-  User   User?      @relation(fields: [userId], references: [id])
-  userId BigInt?
 
   @@index([clubId, memberId, status])
   @@map("fine")
@@ -545,27 +537,27 @@ model Fine {
 // ==================== 团费 ====================
 
 model GroupFee {
-  id        BigInt    @id @default(autoincrement())
-  clubId    BigInt    @map("club_id")
-  memberId  BigInt    @map("member_id")
+  id          BigInt   @id @default(autoincrement())
+  clubId      BigInt   @map("club_id")
+  memberId    BigInt   @map("member_id")
   // 类型：1 月费 2 季度费 3 年费 4 活动费
-  type      Int       @default(1)
-  period    String    @db.VarChar(50) // 如 "2026-02"
-  amount    Decimal   @db.Decimal(10, 2)
+  type        Int      @default(1)
+  period      String   @db.VarChar(50) // 如 "2026-02"
+  amount      Decimal  @db.Decimal(10, 2)
   // 状态：1 待缴纳 2 已缴纳 3 豁免 4 逾期
-  status    Int       @default(1)
-  dueDate   DateTime  @map("due_date") @db.Date
-  paidAt    DateTime? @map("paid_at")
+  status      Int      @default(1)
+  dueDate     DateTime @map("due_date") @db.Date
+  paidAt      DateTime? @map("paid_at")
   // 支付方式：1 微信 2 支付宝 3 钱包 4 现金
-  payMethod Int       @default(1) @map("pay_method")
-  paidBy    BigInt?   @map("paid_by") // 收款人
-  remark    String?   @db.VarChar(500)
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  payMethod   Int      @default(1) @map("pay_method")
+  paidBy      BigInt?  @map("paid_by") // 收款人
+  remark      String?  @db.VarChar(500)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
   // 软删除
-  deletedAt DateTime? @map("deleted_at")
+  deletedAt   DateTime? @map("deleted_at")
 
-  club   Club       @relation(fields: [clubId], references: [id])
+  club   Club @relation(fields: [clubId], references: [id])
   member ClubMember @relation(fields: [memberId], references: [id])
 
   @@unique([clubId, memberId, period])
@@ -576,31 +568,29 @@ model GroupFee {
 // ==================== 存单/预存 ====================
 
 model Deposit {
-  id              BigInt        @id @default(autoincrement())
-  clubId          BigInt        @map("club_id")
-  memberId        BigInt        @map("member_id")
+  id          BigInt        @id @default(autoincrement())
+  clubId      BigInt        @map("club_id")
+  memberId    BigInt        @map("member_id")
   // 类型：1 存单 2 预存
-  type            Int           @default(1)
-  amount          Decimal       @db.Decimal(10, 2) // 存入金额
-  balance         Decimal       @default(0) @db.Decimal(10, 2) // 剩余金额
+  type        Int           @default(1)
+  amount      Decimal       @db.Decimal(10, 2) // 存入金额
+  balance     Decimal       @default(0) @db.Decimal(10, 2) // 剩余金额
   // 状态
-  status          DepositStatus @default(FROZEN)
+  status      DepositStatus @default(FROZEN)
   // 过期时间
-  expireDate      DateTime?     @map("expire_date") @db.Date
-  expiredToIncome Boolean       @default(false) @map("expired_to_income")
-  remark          String?       @db.VarChar(500)
-  createdBy       BigInt        @map("created_by")
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
+  expireDate  DateTime?     @map("expire_date") @db.Date
+  expiredToIncome Boolean   @default(false) @map("expired_to_income")
+  remark      String?       @db.VarChar(500)
+  createdBy   BigInt        @map("created_by")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
   // 软删除
-  deletedAt       DateTime?     @map("deleted_at")
+  deletedAt   DateTime?     @map("deleted_at")
 
-  club    Club           @relation(fields: [clubId], references: [id])
-  member  ClubMember     @relation(fields: [memberId], references: [id])
-  usages  DepositUsage[]
+  club   Club @relation(fields: [clubId], references: [id])
+  member ClubMember @relation(fields: [memberId], references: [id])
+  usages DepositUsage[]
   reports Report[]
-  User    User?          @relation(fields: [userId], references: [id])
-  userId  BigInt?
 
   @@index([clubId, memberId, status])
   @@map("deposit")
@@ -609,13 +599,13 @@ model Deposit {
 // ==================== 存单使用记录 ====================
 
 model DepositUsage {
-  id        BigInt   @id @default(autoincrement())
-  depositId BigInt   @map("deposit_id")
-  reportId  BigInt   @map("report_id") // 关联报备
-  amount    Decimal  @db.Decimal(10, 2) // 使用金额
+  id         BigInt   @id @default(autoincrement())
+  depositId  BigInt   @map("deposit_id")
+  reportId   BigInt   @map("report_id") // 关联报备
+  amount     Decimal  @db.Decimal(10, 2) // 使用金额
   // 使用类型：1 扣抽成 2 扣团费 3 扣罚款
-  usageType Int      @default(1)
-  createdAt DateTime @default(now()) @map("created_at")
+  usageType  Int      @default(1)
+  createdAt  DateTime @default(now()) @map("created_at")
 
   deposit Deposit @relation(fields: [depositId], references: [id])
 
@@ -627,30 +617,30 @@ model DepositUsage {
 // ==================== 积分充值记录 ====================
 
 model PointRecharge {
-  id           BigInt    @id @default(autoincrement())
-  clubId       BigInt    @map("club_id")
-  operatorId   BigInt    @map("operator_id") // 操作人
-  recipientId  BigInt    @map("recipient_id") // 接收人
+  id          BigInt   @id @default(autoincrement())
+  clubId      BigInt   @map("club_id")
+  operatorId  BigInt   @map("operator_id") // 操作人
+  recipientId BigInt   @map("recipient_id") // 接收人
   // 充值类型：1 为自己 2 为好友
-  rechargeType Int       @default(1) @map("recharge_type")
+  rechargeType Int     @default(1) @map("recharge_type")
   // 充值积分
-  points       Decimal   @db.Decimal(10, 2)
+  points      Decimal  @db.Decimal(10, 2)
   // 支付金额
-  payAmount    Decimal?  @map("pay_amount") @db.Decimal(10, 2)
+  payAmount   Decimal? @map("pay_amount") @db.Decimal(10, 2)
   // 支付方式：1 微信 2 支付宝 3 钱包余额 4 管理员赠送
-  payMethod    Int       @default(1) @map("pay_method")
+  payMethod   Int      @default(1) @map("pay_method")
   // 状态：1 待支付 2 支付成功 3 支付失败 4 已取消 5 处理中
-  status       Int       @default(1)
+  status      Int      @default(1)
   // 充值后余额
-  balanceAfter Decimal   @default(0) @map("balance_after") @db.Decimal(10, 2)
+  balanceAfter Decimal @default(0) @map("balance_after") @db.Decimal(10, 2)
   // 订单号
-  orderId      String?   @map("order_id") @db.VarChar(100)
+  orderId     String?  @map("order_id") @db.VarChar(100)
   // 幂等性支持
-  requestId    String?   @unique @map("request_id") @db.VarChar(64)
-  paidAt       DateTime? @map("paid_at")
-  remark       String?   @db.VarChar(500)
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  requestId   String?  @unique @map("request_id") @db.VarChar(64)
+  paidAt      DateTime? @map("paid_at")
+  remark      String?  @db.VarChar(500)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@index([clubId, recipientId, createdAt])
   @@index([requestId])
@@ -660,22 +650,22 @@ model PointRecharge {
 // ==================== 积分消费记录 ====================
 
 model PointExpense {
-  id           BigInt   @id @default(autoincrement())
-  clubId       BigInt   @map("club_id")
-  walletId     BigInt   @map("wallet_id")
-  memberId     BigInt   @map("member_id")
+  id         BigInt   @id @default(autoincrement())
+  clubId     BigInt   @map("club_id")
+  walletId   BigInt   @map("wallet_id")
+  memberId   BigInt   @map("member_id")
   // 消费类型：1 代扣抽成 2 兑换商品 3 兑换服务 4 转账 5 罚款扣减
-  expenseType  Int
-  points       Decimal  @db.Decimal(10, 2)
+  expenseType Int    
+  points     Decimal  @db.Decimal(10, 2)
   // 关联类型：report | fine | product | transfer
-  relateType   String?  @map("relate_type") @db.VarChar(50)
-  relateId     BigInt?  @map("relate_id")
+  relateType String?  @map("relate_type") @db.VarChar(50)
+  relateId   BigInt?  @map("relate_id")
   // 状态：1 成功 2 失败 3 处理中
-  status       Int      @default(1)
+  status     Int      @default(1)
   // 消费后余额
-  balanceAfter Decimal  @default(0) @map("balance_after") @db.Decimal(10, 2)
-  remark       String?  @db.VarChar(500)
-  createdAt    DateTime @default(now()) @map("created_at")
+  balanceAfter Decimal @default(0) @map("balance_after") @db.Decimal(10, 2)
+  remark     String?  @db.VarChar(500)
+  createdAt  DateTime @default(now()) @map("created_at")
 
   @@index([walletId, createdAt])
   @@map("point_expense")
@@ -705,18 +695,18 @@ model BossReferral {
 // ==================== 俱乐部榜单（物化视图）====================
 
 model ClubRanking {
-  id           BigInt   @id @default(autoincrement())
-  clubId       BigInt   @map("club_id")
-  memberId     BigInt   @map("member_id")
+  id          BigInt   @id @default(autoincrement())
+  clubId      BigInt   @map("club_id")
+  memberId    BigInt   @map("member_id")
   // 榜单类型：1 业绩榜 2 接单王 3 好评王 4 出勤榜
-  rankType     Int
-  period       String   @db.VarChar(50) // 如 "2026-02"
-  rank         Int      @db.Int // 排名
-  value        Decimal  @db.Decimal(10, 2) // 数值
+  rankType    Int     
+  period      String   @db.VarChar(50) // 如 "2026-02"
+  rank        Int      @db.Int // 排名
+  value       Decimal  @db.Decimal(10, 2) // 数值
   calculatedAt DateTime @default(now()) @map("calculated_at")
-  createdAt    DateTime @default(now()) @map("created_at")
+  createdAt   DateTime @default(now()) @map("created_at")
 
-  club   Club       @relation(fields: [clubId], references: [id])
+  club   Club @relation(fields: [clubId], references: [id])
   member ClubMember @relation(fields: [memberId], references: [id])
 
   @@unique([clubId, rankType, period, memberId])
@@ -727,20 +717,20 @@ model ClubRanking {
 // ==================== 用户反馈 ====================
 
 model Feedback {
-  id        BigInt    @id @default(autoincrement())
-  userId    BigInt    @map("user_id")
-  clubId    BigInt?   @map("club_id")
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  clubId    BigInt?  @map("club_id")
   // 类型：1 投诉 2 建议 3 咨询 4 其他
-  type      Int       @default(2)
-  content   String    @db.Text
-  images    Json? // 图片 URL 数组
+  type      Int      @default(2)
+  content   String   @db.Text
+  images    Json?    // 图片 URL 数组
   // 状态：1 待处理 2 处理中 3 已回复 4 已关闭
-  status    Int       @default(1)
-  reply     String?   @db.Text
-  repliedBy BigInt?   @map("replied_by")
+  status    Int      @default(1)
+  reply     String?  @db.Text
+  repliedBy BigInt?  @map("replied_by")
   repliedAt DateTime? @map("replied_at")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id])
 

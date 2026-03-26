@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ReportStatus, MemberStatus, MemberRole } from '@prisma/client';
 
 export enum WalletTransactionType {
   RECHARGE = 1,    // 充值

@@ -2,8 +2,8 @@ import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } fro
 import { AuthGuard } from '@nestjs/passport';
 import { MemberService } from './member.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { ClubRole, MemberStatus } from '../../common/constants';
 import { IsString, IsNotEmpty, IsOptional, IsNumber, IsArray, Min, IsEnum, IsIn } from 'class-validator';
+import { MemberRole } from '@prisma/client';
 
 // DTO 定义
 class MemberQueryDto {
@@ -23,11 +23,11 @@ class MemberQueryDto {
 
   @IsNumber()
   @IsOptional()
-  status?: MemberStatus;
+  status?: number;
 
   @IsNumber()
   @IsOptional()
-  role?: ClubRole;
+  role?: number;
 }
 
 class ApplyDto {
@@ -43,7 +43,7 @@ class ApproveDto {
 
   @IsNumber()
   @IsOptional()
-  role?: ClubRole;
+  role?: number;
 }
 
 class BatchApproveDto {
@@ -62,8 +62,8 @@ class UpdateRoleDto {
   clubId: string;
 
   @IsNumber()
-  @IsIn([ClubRole.ADMIN, ClubRole.LEADER, ClubRole.MEMBER], { message: '角色值无效' })
-  role: ClubRole;
+  @IsIn([1, 2, 3, 4], { message: '角色值无效' })
+  role: number;
 }
 
 class RejectDto {
@@ -130,7 +130,7 @@ export class MemberController {
       BigInt(dto.clubId),
       BigInt(userId),
       BigInt(approverId),
-      dto.role,
+      dto.role as unknown as MemberRole,
     );
   }
 
@@ -181,7 +181,7 @@ export class MemberController {
     return this.memberService.updateRole(
       BigInt(dto.clubId),
       BigInt(userId),
-      dto.role,
+      dto.role as unknown as MemberRole,
       BigInt(operatorId),
     );
   }
@@ -205,13 +205,13 @@ export class MemberController {
    */
   @Post('add')
   add(
-    @Body() body: { clubId: string; userId: string; role?: ClubRole },
+    @Body() body: { clubId: string; userId: string; role?: number },
     @CurrentUser('id') operatorId: string,
   ) {
     return this.memberService.addDirectly(
       BigInt(body.clubId),
       BigInt(body.userId),
-      body.role || ClubRole.MEMBER,
+      body.role as unknown as MemberRole,
       BigInt(operatorId),
     );
   }

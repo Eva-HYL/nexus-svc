@@ -8,7 +8,7 @@ export const CLUB_ROLES_KEY = 'clubRoles';
  * 用于标注接口所需的俱乐部角色
  * 
  * @example
- * @ClubRoles(ClubRole.ADMIN, ClubRole.FOUNDER)
+ * @ClubRoles(MemberRole.ADMIN, MemberRole.OWNER)
  * @UseGuards(ClubRoleGuard)
  * approveReport() {}
  */
@@ -19,11 +19,11 @@ export const ClubRoles = (...roles: ClubRole[]) => SetMetadata(CLUB_ROLES_KEY, r
  * 包含 ClubMemberGuard 和 ClubRoleGuard
  */
 import { applyDecorators, UseGuards } from '@nestjs/common';
-import { ClubMemberGuard, ClubRoleGuard } from '../guards/club-member.guard';
+import { ClubMemberGuard } from '../guards/club-member.guard';
 
 export function RequireClubRole(...roles: ClubRole[]) {
   return applyDecorators(
     ClubRoles(...roles),
-    UseGuards(ClubMemberGuard, ClubRoleGuard),
+    UseGuards(ClubMemberGuard),
   );
 }

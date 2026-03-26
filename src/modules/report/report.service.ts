@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ReportStatus, MemberStatus, MemberRole } from '@prisma/client';
 import { ProjectService } from '../project/project.service';
 import { WalletService } from '../wallet/wallet.service';
 
@@ -62,7 +63,7 @@ export class ReportService {
           amount: baseAmount,
           commission,
           actualAmount,
-          status: 1,
+          status: ReportStatus.PENDING,
           remark: dto.remark,
           createdBy: memberId,
         },
@@ -131,7 +132,7 @@ export class ReportService {
 
   async findPending(clubId: bigint) {
     return this.prisma.report.findMany({
-      where: { clubId, status: 1 },
+      where: { clubId, status: ReportStatus.PENDING },
       include: {
         project: { select: { name: true } },
         creator: { select: { nickname: true } },
@@ -142,14 +143,14 @@ export class ReportService {
 
   async approve(reportId: bigint, approverId: bigint) {
     const report = await this.prisma.report.findUnique({ where: { id: reportId } });
-    if (!report || report.status !== 1) {
+    if (!report || report.status !== ReportStatus.PENDING) {
       throw new BadRequestException('报备状态异常，无法审批');
     }
 
     return this.prisma.$transaction(async (tx) => {
       await tx.report.update({
         where: { id: reportId },
-        data: { status: 2, approvedBy: approverId, approvedAt: new Date() },
+        data: { status: ReportStatus.APPROVED, approvedBy: approverId, approvedAt: new Date() },
       });
       await tx.earning.updateMany({
         where: { reportId },
@@ -161,14 +162,14 @@ export class ReportService {
 
   async reject(reportId: bigint, approverId: bigint, reason?: string) {
     const report = await this.prisma.report.findUnique({ where: { id: reportId } });
-    if (!report || report.status !== 1) {
+    if (!report || report.status !== ReportStatus.PENDING) {
       throw new BadRequestException('报备状态异常，无法驳回');
     }
 
     return this.prisma.$transaction(async (tx) => {
       await tx.report.update({
         where: { id: reportId },
-        data: { status: 3, approvedBy: approverId, remark: reason },
+        data: { status: ReportStatus.REJECTED, approvedBy: approverId, remark: reason },
       });
       await tx.earning.updateMany({
         where: { reportId },
@@ -191,7 +192,7 @@ export class ReportService {
       throw new NotFoundException('报备不存在');
     }
     
-    if (report.status !== 1) {
+    if (report.status !== ReportStatus.PENDING) {
       throw new BadRequestException('只能撤销待审批的报备');
     }
     
@@ -204,7 +205,7 @@ export class ReportService {
       // 更新报备状态为已撤销
       await tx.report.update({
         where: { id: reportId },
-        data: { status: 4 },
+        data: { status: ReportStatus.CANCELLED },
       });
       
       // 删除关联的收入记录

@@ -1,7 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ClubRole, MemberStatus } from '../constants';
+import { MemberRole, MemberStatus } from '@prisma/client';
 
 export const CLUB_ID_KEY = 'clubId';
 
@@ -50,7 +50,7 @@ export class ClubMemberGuard implements CanActivate {
       throw new ForbiddenException('您不属于该俱乐部');
     }
 
-    if (membership.status !== MemberStatus.ACTIVE) {
+    if (membership.status !== MemberStatus.IDLE) {
       throw new ForbiddenException('您的成员状态异常');
     }
 
@@ -66,8 +66,8 @@ export class ClubMemberGuard implements CanActivate {
  * 验证当前用户在俱乐部中的角色
  */
 @Injectable()
-export class ClubRoleGuard implements CanActivate {
-  private readonly logger = new Logger(ClubRoleGuard.name);
+export class MemberRoleGuard implements CanActivate {
+  private readonly logger = new Logger(MemberRoleGuard.name);
 
   constructor(
     private reflector: Reflector,
@@ -75,7 +75,7 @@ export class ClubRoleGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredRoles = this.reflector.getAllAndOverride<ClubRole[]>(
+    const requiredRoles = this.reflector.getAllAndOverride<MemberRole[]>(
       'clubRoles',
       [context.getHandler(), context.getClass()],
     );
@@ -110,13 +110,13 @@ export class ClubRoleGuard implements CanActivate {
     }
 
     // 创始人拥有所有权限
-    if (membership.role === ClubRole.FOUNDER) {
+    if (membership.role === MemberRole.OWNER) {
       request.membership = membership;
       return true;
     }
 
     // 检查角色是否符合要求
-    if (!requiredRoles.includes(membership.role as ClubRole)) {
+    if (!requiredRoles.includes(membership.role as MemberRole)) {
       throw new ForbiddenException('您没有该操作的权限');
     }
 
