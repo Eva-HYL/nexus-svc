@@ -130,7 +130,7 @@ export class MemberController {
       BigInt(dto.clubId),
       BigInt(userId),
       BigInt(approverId),
-      dto.role as unknown as MemberRole,
+      
     );
   }
 
@@ -181,7 +181,7 @@ export class MemberController {
     return this.memberService.updateRole(
       BigInt(dto.clubId),
       BigInt(userId),
-      dto.role as unknown as MemberRole,
+      dto.role,
       BigInt(operatorId),
     );
   }

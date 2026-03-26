@@ -92,7 +92,7 @@ export class MemberService {
   /**
    * 审批通过成员申请
    */
-  async approve(clubId: bigint, userId: bigint, approverId: bigint, role: MemberRole = MemberRole.MEMBER) {
+  async approve(clubId: bigint, userId: bigint, approverId: bigint) {
     const membership = await this.prisma.clubMember.findUnique({
       where: { clubId_userId: { clubId, userId } },
     });
@@ -106,7 +106,7 @@ export class MemberService {
       where: { clubId_userId: { clubId, userId } },
       data: { 
         status: MemberStatus.IDLE, 
-        role,
+        role: MemberRole.MEMBER,
         joinedAt: new Date(),
       },
     });
@@ -177,7 +177,7 @@ export class MemberService {
       where: { clubId_userId: { clubId, userId: operatorId } },
     });
 
-    if (newRole === 2 && operator?.role !== 1) {
+    if (newRole === 2 && operator?.role !== MemberRole.OWNER) {
       throw new ForbiddenException('只有创始人可以设置管理员');
     }
 
