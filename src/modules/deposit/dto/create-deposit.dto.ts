@@ -1,5 +1,9 @@
 import { IsString, IsNotEmpty, IsInt, Min, Max, IsOptional, IsBoolean } from 'class-validator';
+import { DepositType } from '@prisma/client';
 
+/**
+ * 创建存单 DTO
+ */
 export class CreateDepositDto {
   @IsString()
   @IsNotEmpty()
@@ -8,7 +12,8 @@ export class CreateDepositDto {
   @IsInt()
   @Min(1)
   @Max(2)
-  type?: number = 1; // 1 存单 2 预存
+  @IsOptional()
+  type?: DepositType = DepositType.DEPOSIT; // 1 存单 2 预存
 
   @IsInt()
   @Min(0)
@@ -27,6 +32,9 @@ export class CreateDepositDto {
   remark?: string;
 }
 
+/**
+ * 退还存单 DTO
+ */
 export class RefundDepositDto {
   @IsString()
   @IsOptional()

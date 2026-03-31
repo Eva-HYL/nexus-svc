@@ -50,7 +50,8 @@ export class AuthService {
         phone: dto.phone,
         password: hashedPassword,
         nickname: dto.nickname,
-        status: UserStatus.ACTIVE,
+        status: 1,
+          openid: `mock_${Date.now()}_${Math.random().toString(36).slice(2)}`,
       },
     });
 
@@ -107,7 +108,8 @@ export class AuthService {
           phone: `wx_${wxResult.openid}`,
           password: await bcrypt.hash(Math.random().toString(36), SALT_ROUNDS),
           nickname: `微信用户${wxResult.openid.slice(-6)}`,
-          status: UserStatus.ACTIVE,
+          status: 1,
+          openid: `mock_${Date.now()}_${Math.random().toString(36).slice(2)}`,
         },
       });
       this.logger.log(`微信新用户注册: ${user.id}, openid: ${wxResult.openid}`);
@@ -144,7 +146,8 @@ export class AuthService {
           phone,
           password: await bcrypt.hash(Math.random().toString(36), SALT_ROUNDS),
           nickname: `用户${phone.slice(-4)}`,
-          status: UserStatus.ACTIVE,
+          status: 1,
+          openid: `mock_${Date.now()}_${Math.random().toString(36).slice(2)}`,
         },
       });
       this.logger.log(`短信登录新用户注册: ${user.id}, phone: ${phone}`);

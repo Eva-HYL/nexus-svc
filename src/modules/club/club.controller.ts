@@ -1,103 +1,45 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, ForbiddenException } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ClubService } from './club.service';
-import { ClubConfigService } from './club-config.service';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { ClubRole, MemberStatus } from '../../common/constants';
-import { IsString, IsNotEmpty, IsOptional, IsNumber, Min, IsInt, IsPositive, IsBoolean, Max } from 'class-validator';
+import { CreateClubDto, UpdateClubDto } from './dto/club.dto';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { MemberRole } from '@prisma/client';
 
-// DTO 定义
-class CreateClubDto {
-  @IsString()
-  @IsNotEmpty({ message: '俱乐部名称不能为空' })
-  name: string;
-
-  @IsString()
-  @IsOptional()
-  logo?: string;
-
-  @IsString()
-  @IsOptional()
-  description?: string;
-
-  @IsNumber()
-  @Min(0)
-  @IsOptional()
-  depositAmount?: number;
-}
-
-class UpdateClubDto {
-  @IsString()
-  @IsOptional()
-  name?: string;
-
-  @IsString()
-  @IsOptional()
-  logo?: string;
-
-  @IsString()
-  @IsOptional()
-  description?: string;
-}
-
-class TransferClubDto {
-  @IsNumber()
-  @IsPositive({ message: '新所有者ID必须为正数' })
-  newOwnerId: number;
-}
-
-class UpdateConfigDto {
-  @IsBoolean()
-  @IsOptional()
-  autoDeduct?: boolean;
-
-  @IsNumber()
-  @Min(0)
-  @IsOptional()
-  minBalance?: number;
-
-  @IsNumber()
-  @Min(1)
-  @Max(4)
-  @IsOptional()
-  approvalMode?: number;
-
-  @IsNumber()
-  @Min(0)
-  @Max(1)
-  @IsOptional()
-  withdrawFeeRate?: number;
-
-  @IsNumber()
-  @Min(0)
-  @IsOptional()
-  minWithdrawAmount?: number;
-}
-
-@Controller('club')
-@UseGuards(AuthGuard('jwt'))
+@Controller('api/club')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class ClubController {
-  constructor(
-    private clubService: ClubService,
-    private clubConfigService: ClubConfigService,
-  ) {}
+  constructor(private readonly clubService: ClubService) {}
+
+  /**
+   * 获取我的俱乐部列表
+   * GET /api/club/my-clubs
+   */
+  @Get('my-clubs')
+  async getMyClubs(@Request() req: any) {
+    const { userId } = req.user;
+    return this.clubService.getMyClubs(userId);
+  }
 
   /**
    * 创建俱乐部
    * POST /api/club/create
    */
   @Post('create')
-  create(@CurrentUser('id') userId: string, @Body() dto: CreateClubDto) {
-    return this.clubService.create(BigInt(userId), dto);
-  }
-
-  /**
-   * 获取我的俱乐部列表
-   * GET /api/club/list
-   */
-  @Get('list')
-  myClubs(@CurrentUser('id') userId: string) {
-    return this.clubService.findByUser(BigInt(userId));
+  async create(@Request() req: any, @Body() dto: CreateClubDto) {
+    const { userId } = req.user;
+    return this.clubService.create(userId, dto);
   }
 
   /**
@@ -105,8 +47,8 @@ export class ClubController {
    * GET /api/club/:id
    */
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.clubService.findById(BigInt(id));
+  async getClub(@Param('id') id: string) {
+    return this.clubService.getClubById(BigInt(id));
   }
 
   /**
@@ -114,12 +56,11 @@ export class ClubController {
    * PUT /api/club/:id
    */
   @Put(':id')
+  @Roles(MemberRole.ADMIN, MemberRole.OWNER)
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateClubDto,
-    @CurrentUser('id') userId: string,
   ) {
-    // TODO: 添加权限守卫，只有创始人/管理员可以修改
     return this.clubService.update(BigInt(id), dto);
   }
 
@@ -128,12 +69,18 @@ export class ClubController {
    * POST /api/club/:id/transfer
    */
   @Post(':id/transfer')
+  @Roles(MemberRole.OWNER)
   async transfer(
+    @Request() req: any,
     @Param('id') id: string,
-    @Body() dto: TransferClubDto,
-    @CurrentUser('id') userId: string,
+    @Body() dto: { newOwnerId: number },
   ) {
-    return this.clubService.transfer(BigInt(id), BigInt(userId), BigInt(dto.newOwnerId));
+    const { userId } = req.user;
+    return this.clubService.transfer(
+      BigInt(id),
+      userId,
+      BigInt(dto.newOwnerId),
+    );
   }
 
   /**
@@ -141,51 +88,38 @@ export class ClubController {
    * DELETE /api/club/:id
    */
   @Delete(':id')
-  async dissolve(
-    @Param('id') id: string,
-    @CurrentUser('id') userId: string,
-  ) {
-    return this.clubService.dissolve(BigInt(id), BigInt(userId));
+  @Roles(MemberRole.OWNER)
+  async dissolve(@Request() req: any, @Param('id') id: string) {
+    const { userId } = req.user;
+    return this.clubService.dissolve(BigInt(id), userId);
   }
 
   /**
-   * 退出俱乐部
-   * POST /api/club/:id/quit
+   * 切换俱乐部
+   * POST /api/club/switch
    */
-  @Post(':id/quit')
-  async quit(
-    @Param('id') id: string,
-    @CurrentUser('id') userId: string,
-  ) {
-    return this.clubService.quit(BigInt(id), BigInt(userId));
+  @Post('switch')
+  @HttpCode(HttpStatus.OK)
+  async switchClub(@Request() req: any, @Body() dto: { clubId: number }) {
+    const { userId } = req.user;
+    return this.clubService.switchClub(userId, BigInt(dto.clubId));
   }
 
   /**
-   * 获取俱乐部配置
-   * GET /api/club/:id/config
+   * 获取当前俱乐部
+   * GET /api/club/current
    */
-  @Get(':id/config')
-  async getConfig(@Param('id') id: string) {
-    return this.clubConfigService.getConfig(BigInt(id));
-  }
-
-  /**
-   * 更新俱乐部配置
-   * PUT /api/club/:id/config
-   */
-  @Put(':id/config')
-  async updateConfig(
-    @Param('id') id: string,
-    @Body() dto: UpdateConfigDto,
-    @CurrentUser('id') userId: string,
-  ) {
-    // TODO: 添加权限检查，只有管理员可以修改配置
-    return this.clubConfigService.updateConfig(BigInt(id), {
-      autoDeduct: dto.autoDeduct,
-      minBalance: dto.minBalance,
-      approvalMode: dto.approvalMode,
-      withdrawFeeRate: dto.withdrawFeeRate,
-      minWithdrawAmount: dto.minWithdrawAmount,
-    });
+  @Get('current')
+  async getCurrentClub(@Request() req: any) {
+    const { userId, currentClubId } = req.user;
+    if (!currentClubId) {
+      // 获取用户的第一个俱乐部
+      const clubs = await this.clubService.getMyClubs(userId);
+      if (clubs.length === 0) {
+        return { club: null };
+      }
+      return { club: clubs[0] };
+    }
+    return this.clubService.getClubById(currentClubId);
   }
 }

@@ -118,7 +118,7 @@ describe('ReportService', () => {
     it('should throw exception if report not found', async () => {
       jest.spyOn(prisma.report, 'findUnique').mockResolvedValue(null);
 
-      await expect(service.approve(1n, 1n, 1n)).rejects.toThrow(NotFoundException);
+      await expect(service.approve(1n, 1n)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw exception if report not pending', async () => {
@@ -127,7 +127,7 @@ describe('ReportService', () => {
         status: 2,
       } as any);
 
-      await expect(service.approve(1n, 1n, 1n)).rejects.toThrow(BadRequestException);
+      await expect(service.approve(1n, 1n)).rejects.toThrow(BadRequestException);
     });
   });
 });

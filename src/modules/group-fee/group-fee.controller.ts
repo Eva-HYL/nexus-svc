@@ -1,8 +1,13 @@
-import { Controller, Get, Post, Put, Query, Body, Param, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { GroupFeeService } from './group-fee.service';
 import { CreateGroupFeeDto, PayGroupFeeDto } from './dto/create-group-fee.dto';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { MemberRole } from '@prisma/client';
 
-@Controller('api/fee/group')
+@Controller('fee/group')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class GroupFeeController {
   constructor(private readonly groupFeeService: GroupFeeService) {}
 
@@ -19,9 +24,10 @@ export class GroupFeeController {
   }
 
   /**
-   * 创建团费（管理员）
+   * 创建团费（组长及以上）
    */
   @Post('create')
+  @Roles(MemberRole.LEADER, MemberRole.ADMIN, MemberRole.OWNER)
   async createGroupFee(@Request() req: any, @Body() dto: CreateGroupFeeDto) {
     const { clubId } = req.user;
     return this.groupFeeService.create(BigInt(clubId), dto);

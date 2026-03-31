@@ -1,5 +1,9 @@
 import { IsString, IsNotEmpty, IsInt, Min, Max, IsOptional } from 'class-validator';
+import { GroupFeeType } from '@prisma/client';
 
+/**
+ * 创建团费 DTO
+ */
 export class CreateGroupFeeDto {
   @IsString()
   @IsNotEmpty()
@@ -8,7 +12,8 @@ export class CreateGroupFeeDto {
   @IsInt()
   @Min(1)
   @Max(4)
-  type?: number = 1; // 1 月费 2 季度费 3 年费 4 活动费
+  @IsOptional()
+  type?: GroupFeeType = GroupFeeType.MONTHLY; // 1 月费 2 季度费 3 年费 4 活动费
 
   @IsString()
   @IsNotEmpty()
@@ -23,6 +28,9 @@ export class CreateGroupFeeDto {
   dueDate: string;
 }
 
+/**
+ * 缴纳团费 DTO
+ */
 export class PayGroupFeeDto {
   @IsInt()
   @Min(1)

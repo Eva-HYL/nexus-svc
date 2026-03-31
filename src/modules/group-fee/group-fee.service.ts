@@ -45,10 +45,9 @@ export class GroupFeeService {
       data: {
         clubId,
         memberId: BigInt(dto.memberId),
-        type: dto.type || 1,
+        type: dto.type,
         period: dto.period,
         amount: dto.amount,
-        status: 1,
         dueDate: new Date(dto.dueDate),
       },
     });

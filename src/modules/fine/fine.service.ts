@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { FineStatus } from '@prisma/client';
 import { CreateFineDto, PayFineDto } from './dto/create-fine.dto';
 
 @Injectable()
@@ -42,22 +41,14 @@ export class FineService {
    * 创建罚款
    */
   async create(clubId: bigint, issuedById: bigint, dto: CreateFineDto) {
-    const statusMap: Record<number, FineStatus> = {
-      1: FineStatus.PENDING,
-      2: FineStatus.PAID,
-      3: FineStatus.WAIVED,
-      4: FineStatus.OVERDUE,
-    };
-
     return this.prisma.fine.create({
       data: {
         clubId,
         memberId: BigInt(dto.memberId),
         issuedBy: issuedById,
-        type: dto.type || 1,
+        type: dto.type,
         reason: dto.reason,
         amount: dto.amount,
-        status: FineStatus.PENDING,
         dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
       },
     });
@@ -69,14 +60,14 @@ export class FineService {
   async pay(id: bigint, dto: PayFineDto) {
     const fine = await this.findById(id);
 
-    if (fine.status !== FineStatus.PENDING) {
+    if (fine.status !== 'PENDING' && Number(fine.status) !== 1) {
       throw new NotFoundException('罚款状态异常');
     }
 
     return this.prisma.fine.update({
       where: { id },
       data: {
-        status: FineStatus.PAID,
+        status: 'PAID',
         paidAt: new Date(),
         payMethod: dto.payMethod,
         paidBy: dto.paidById ? BigInt(dto.paidById) : fine.memberId,
@@ -93,7 +84,7 @@ export class FineService {
     return this.prisma.fine.update({
       where: { id },
       data: {
-        status: FineStatus.WAIVED,
+        status: 'WAIVED',
       },
     });
   }

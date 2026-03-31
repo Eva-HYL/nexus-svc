@@ -1,6 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ReportStatus, MemberStatus, MemberRole } from '@prisma/client';
+import {
+  ReportStatus,
+  MemberStatus,
+  MemberRole,
+} from '@prisma/client';
 
 @Injectable()
 export class MemberService {
@@ -11,9 +21,12 @@ export class MemberService {
   /**
    * 获取成员列表
    */
-  async findAll(clubId: bigint, query: { page?: number; pageSize?: number; status?: number; role?: number }) {
+  async findAll(
+    clubId: bigint,
+    query: { page?: number; pageSize?: number; status?: number; role?: number },
+  ) {
     const { page = 1, pageSize = 20, status, role } = query;
-    
+
     const where: any = { clubId };
     if (status) where.status = status;
     if (role) where.role = role;
@@ -21,10 +34,10 @@ export class MemberService {
     const [list, total] = await Promise.all([
       this.prisma.clubMember.findMany({
         where,
-        include: { 
-          user: { 
-            select: { id: true, nickname: true, avatar: true, phone: true } 
-          } 
+        include: {
+          user: {
+            select: { id: true, nickname: true, avatar: true, phone: true },
+          },
         },
         skip: (page - 1) * pageSize,
         take: pageSize,
@@ -32,7 +45,7 @@ export class MemberService {
       }),
       this.prisma.clubMember.count({ where }),
     ]);
-    
+
     return { list, pagination: { page, pageSize, total } };
   }
 
@@ -42,10 +55,16 @@ export class MemberService {
   async findPending(clubId: bigint) {
     return this.prisma.clubMember.findMany({
       where: { clubId, status: MemberStatus.PENDING },
-      include: { 
-        user: { 
-          select: { id: true, nickname: true, avatar: true, phone: true, createdAt: true } 
-        } 
+      include: {
+        user: {
+          select: {
+            id: true,
+            nickname: true,
+            avatar: true,
+            phone: true,
+            createdAt: true,
+          },
+        },
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -76,11 +95,11 @@ export class MemberService {
     // 创建申请（待审核状态）
     const member = await this.prisma.clubMember.upsert({
       where: { clubId_userId: { clubId, userId } },
-      create: { 
-        clubId, 
-        userId, 
-        role: MemberRole.MEMBER, 
-        status: MemberStatus.PENDING 
+      create: {
+        clubId,
+        userId,
+        role: MemberRole.MEMBER,
+        status: MemberStatus.PENDING,
       },
       update: { status: MemberStatus.PENDING },
     });
@@ -104,8 +123,8 @@ export class MemberService {
 
     const result = await this.prisma.clubMember.update({
       where: { clubId_userId: { clubId, userId } },
-      data: { 
-        status: MemberStatus.IDLE, 
+      data: {
+        status: MemberStatus.IDLE,
         role: MemberRole.MEMBER,
         joinedAt: new Date(),
       },
@@ -118,7 +137,12 @@ export class MemberService {
   /**
    * 拒绝成员申请
    */
-  async reject(clubId: bigint, userId: bigint, approverId: bigint, reason?: string) {
+  async reject(
+    clubId: bigint,
+    userId: bigint,
+    approverId: bigint,
+    reason?: string,
+  ) {
     const membership = await this.prisma.clubMember.findUnique({
       where: { clubId_userId: { clubId, userId } },
     });
@@ -133,7 +157,9 @@ export class MemberService {
       data: { status: MemberStatus.LEFT },
     });
 
-    this.logger.log(`成员申请拒绝: user ${userId} rejected by ${approverId}, reason: ${reason || 'N/A'}`);
+    this.logger.log(
+      `成员申请拒绝: user ${userId} rejected by ${approverId}, reason: ${reason || 'N/A'}`,
+    );
     return result;
   }
 
@@ -147,24 +173,31 @@ export class MemberService {
         userId: { in: userIds },
         status: MemberStatus.PENDING,
       },
-      data: { 
+      data: {
         status: MemberStatus.IDLE,
         joinedAt: new Date(),
       },
     });
 
-    this.logger.log(`批量审批通过: ${result.count} members approved by ${approverId}`);
+    this.logger.log(
+      `批量审批通过: ${result.count} members approved by ${approverId}`,
+    );
     return { success: true, count: result.count };
   }
 
   /**
    * 更新成员角色
    */
-  async updateRole(clubId: bigint, userId: bigint, newRole: number, operatorId: bigint) {
+  async updateRole(
+    clubId: bigint,
+    userId: bigint,
+    newRole: number,
+    operatorId: bigint,
+  ) {
     const member = await this.prisma.clubMember.findUnique({
       where: { clubId_userId: { clubId, userId } },
     });
-    
+
     if (!member) throw new NotFoundException('成员不存在');
 
     // 不能修改创始人的角色
@@ -194,7 +227,7 @@ export class MemberService {
     const member = await this.prisma.clubMember.findUnique({
       where: { clubId_userId: { clubId, userId } },
     });
-    
+
     if (!member) throw new NotFoundException('成员不存在');
 
     // 不能移除创始人
@@ -214,7 +247,12 @@ export class MemberService {
   /**
    * 直接添加成员（管理员操作，无需审批）
    */
-  async addDirectly(clubId: bigint, userId: bigint, role: MemberRole = MemberRole.MEMBER, operatorId: bigint) {
+  async addDirectly(
+    clubId: bigint,
+    userId: bigint,
+    role: MemberRole = MemberRole.MEMBER,
+    operatorId: bigint,
+  ) {
     // 检查是否已存在
     const existing = await this.prisma.clubMember.findUnique({
       where: { clubId_userId: { clubId, userId } },
@@ -235,7 +273,10 @@ export class MemberService {
    * 生成邀请码/链接
    * TODO: 实现邀请码生成和验证逻辑
    */
-  async generateInviteCode(clubId: bigint, operatorId: bigint): Promise<string> {
+  async generateInviteCode(
+    clubId: bigint,
+    operatorId: bigint,
+  ): Promise<string> {
     // 验证操作者权限
     const operator = await this.prisma.clubMember.findUnique({
       where: { clubId_userId: { clubId, userId: operatorId } },
@@ -248,9 +289,9 @@ export class MemberService {
     // 生成简单邀请码（实际生产环境应该更复杂）
     const crypto = await import('crypto');
     const code = crypto.randomBytes(6).toString('base64url').toUpperCase();
-    
+
     // TODO: 将邀请码存入数据库，设置过期时间
-    
+
     this.logger.log(`邀请码生成: club ${clubId}, code ${code}`);
     return code;
   }

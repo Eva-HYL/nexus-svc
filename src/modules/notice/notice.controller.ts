@@ -1,12 +1,13 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { NoticeService } from './notice.service';
 import { CreateNoticeDto, UpdateNoticeDto } from './dto/create-notice.dto';
-// Guards will be added later
-// import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
-// import { ClubMemberGuard } from '../../club/club-member.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { MemberRole } from '@prisma/client';
 
-@Controller('api/notice')
-// @UseGuards(JwtAuthGuard, ClubMemberGuard) // TODO: Add guards later
+@Controller('notice')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class NoticeController {
   constructor(private readonly noticeService: NoticeService) {}
 
@@ -14,11 +15,12 @@ export class NoticeController {
    * 获取公告列表
    */
   @Get('list')
-  async getNotices(@Query() query: { clubId: string; page?: number; pageSize?: number }) {
+  async getNotices(@Query() query: { clubId: string; page?: number; pageSize?: number; type?: number }) {
     return this.noticeService.findAll(
       BigInt(query.clubId),
       query.page || 1,
       query.pageSize || 20,
+      query.type ? Number(query.type) : undefined,
     );
   }
 
@@ -31,9 +33,10 @@ export class NoticeController {
   }
 
   /**
-   * 创建公告（管理员）
+   * 创建公告（管理员及以上）
    */
   @Post('create')
+  @Roles(MemberRole.ADMIN, MemberRole.OWNER)
   async createNotice(@Request() req: any, @Body() dto: CreateNoticeDto) {
     const { clubId } = req.user;
     const publisherId = req.user.memberId;
@@ -41,17 +44,19 @@ export class NoticeController {
   }
 
   /**
-   * 更新公告（管理员）
+   * 更新公告（管理员及以上）
    */
   @Put(':id')
+  @Roles(MemberRole.ADMIN, MemberRole.OWNER)
   async updateNotice(@Param('id') id: string, @Body() dto: UpdateNoticeDto) {
     return this.noticeService.update(BigInt(id), dto);
   }
 
   /**
-   * 删除公告（管理员）
+   * 删除公告（管理员及以上）
    */
   @Delete(':id')
+  @Roles(MemberRole.ADMIN, MemberRole.OWNER)
   async deleteNotice(@Param('id') id: string) {
     return this.noticeService.remove(BigInt(id));
   }

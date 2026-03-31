@@ -1,35 +1,28 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto, RefreshTokenDto } from './dto/login.dto';
-import { IsString, IsNotEmpty, Matches } from 'class-validator';
+import { LoginDto, RegisterDto, SmsLoginDto, SendSmsDto, RefreshTokenDto } from './dto/login.dto';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { MemberRole } from '@prisma/client';
 
-class WxLoginDto {
-  @IsString()
-  @IsNotEmpty()
-  code: string;
-}
-
-class SmsLoginDto {
-  @IsString()
-  @IsNotEmpty()
-  @Matches(/^1[3-9]\d{9}$/, { message: '手机号格式不正确' })
-  phone: string;
-
-  @IsString()
-  @IsNotEmpty()
-  code: string;
-}
-
-class SendSmsDto {
-  @IsString()
-  @IsNotEmpty({ message: '手机号不能为空' })
-  @Matches(/^1[3-9]\d{9}$/, { message: '手机号格式不正确' })
-  phone: string;
-}
-
-@Controller('auth')
+@Controller('api/auth')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
   /**
    * 用户注册
@@ -41,11 +34,10 @@ export class AuthController {
   }
 
   /**
-   * 用户登录（密码登录）
+   * 用户登录
    * POST /api/auth/login
    */
   @Post('login')
-  @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }
@@ -55,17 +47,15 @@ export class AuthController {
    * POST /api/auth/wx-login
    */
   @Post('wx-login')
-  @HttpCode(HttpStatus.OK)
-  async wxLogin(@Body() dto: WxLoginDto) {
+  async wxLogin(@Body() dto: { code: string }) {
     return this.authService.wxLogin(dto.code);
   }
 
   /**
-   * 验证码登录
+   * 短信登录
    * POST /api/auth/sms-login
    */
   @Post('sms-login')
-  @HttpCode(HttpStatus.OK)
   async smsLogin(@Body() dto: SmsLoginDto) {
     return this.authService.loginBySms(dto.phone, dto.code);
   }
@@ -88,5 +78,25 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async refresh(@Body() dto: RefreshTokenDto) {
     return this.authService.refreshToken(dto.refreshToken);
+  }
+
+  /**
+   * 获取当前用户信息
+   * GET /api/auth/me
+   */
+  @Get('me')
+  async getMe(@Request() req: any) {
+    return this.authService.getMe(req.user);
+  }
+
+  /**
+   * 退出登录
+   * POST /api/auth/logout
+   */
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout(@Request() req: any) {
+    // 前端清除 token 即可，后端可以记录日志或加入黑名单
+    return { success: true, message: '退出成功' };
   }
 }

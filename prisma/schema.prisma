@@ -69,11 +69,34 @@ enum NoticeType {
 }
 
 /// 罚款状态
+/// 罚款类型
+enum FineType {
+  VIOLATION // 违规
+  LATE // 迟到
+  COMPLAINT // 投诉
+  OTHER // 其他
+}
+
+/// 罚款状态
 enum FineStatus {
   PENDING // 待缴纳
   PAID // 已缴纳
   WAIVED // 已豁免
   OVERDUE // 逾期
+}
+
+/// 团费类型
+enum GroupFeeType {
+  MONTHLY // 月费
+  QUARTERLY // 季度费
+  YEARLY // 年费
+  EVENT // 活动费
+}
+
+/// 存单类型
+enum DepositType {
+  DEPOSIT // 存单
+  PREPAID // 预存
 }
 
 /// 存单状态
@@ -517,8 +540,8 @@ model Fine {
   memberId  BigInt     @map("member_id")
   amount    Decimal    @db.Decimal(10, 2)
   reason    String     @db.VarChar(500)
-  // 类型：1 违规 2 迟到 3 投诉 4 其他
-  type      Int        @default(1)
+  // 罚款类型
+  type      FineType   @default(VIOLATION)
   // 状态
   status    FineStatus @default(PENDING)
   issuedBy  BigInt     @map("issued_by") // 开单人
@@ -548,12 +571,12 @@ model GroupFee {
   id        BigInt    @id @default(autoincrement())
   clubId    BigInt    @map("club_id")
   memberId  BigInt    @map("member_id")
-  // 类型：1 月费 2 季度费 3 年费 4 活动费
-  type      Int       @default(1)
+  // 团费类型
+  type      GroupFeeType @default(MONTHLY)
   period    String    @db.VarChar(50) // 如 "2026-02"
   amount    Decimal   @db.Decimal(10, 2)
-  // 状态：1 待缴纳 2 已缴纳 3 豁免 4 逾期
-  status    Int       @default(1)
+  // 状态
+  status    Int       @default(1) // TODO: 创建 GroupFeeStatus Enum
   dueDate   DateTime  @map("due_date") @db.Date
   paidAt    DateTime? @map("paid_at")
   // 支付方式：1 微信 2 支付宝 3 钱包 4 现金
@@ -579,8 +602,8 @@ model Deposit {
   id              BigInt        @id @default(autoincrement())
   clubId          BigInt        @map("club_id")
   memberId        BigInt        @map("member_id")
-  // 类型：1 存单 2 预存
-  type            Int           @default(1)
+  // 存单类型
+  type            DepositType   @default(DEPOSIT)
   amount          Decimal       @db.Decimal(10, 2) // 存入金额
   balance         Decimal       @default(0) @db.Decimal(10, 2) // 剩余金额
   // 状态

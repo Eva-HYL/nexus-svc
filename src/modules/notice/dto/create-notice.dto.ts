@@ -1,5 +1,9 @@
 import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsInt, Min, Max } from 'class-validator';
+import { NoticeType } from '@prisma/client';
 
+/**
+ * 创建公告 DTO
+ */
 export class CreateNoticeDto {
   @IsString()
   @IsNotEmpty()
@@ -13,7 +17,7 @@ export class CreateNoticeDto {
   @Min(1)
   @Max(3)
   @IsOptional()
-  type?: number = 1; // 1 普通 2 重要 3 紧急
+  type?: NoticeType = NoticeType.NORMAL; // 1 普通 2 重要 3 紧急
 
   @IsBoolean()
   @IsOptional()
@@ -24,6 +28,9 @@ export class CreateNoticeDto {
   expiresAt?: string;
 }
 
+/**
+ * 更新公告 DTO
+ */
 export class UpdateNoticeDto {
   @IsString()
   @IsOptional()
@@ -37,7 +44,7 @@ export class UpdateNoticeDto {
   @Min(1)
   @Max(3)
   @IsOptional()
-  type?: number;
+  type?: NoticeType;
 
   @IsBoolean()
   @IsOptional()

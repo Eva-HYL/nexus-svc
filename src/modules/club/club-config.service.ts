@@ -13,10 +13,20 @@ export class ClubConfigService {
       where: { clubId },
     });
 
-    // 如果不存在，创建默认配置
+    // 如果配置不存在，创建默认配置
     if (!config) {
       config = await this.prisma.clubConfig.create({
-        data: { clubId },
+        data: {
+          clubId,
+          autoDeduct: false,
+          minBalance: 0,
+          approvalMode: 1,
+          withdrawFeeRate: 0,
+          minWithdrawAmount: 100,
+          pointOrderOwnerRate: 30,
+          pointOrderReceiverRate: 60,
+          pointOrderClubRate: 10,
+        },
       });
     }
 
@@ -26,41 +36,46 @@ export class ClubConfigService {
   /**
    * 更新俱乐部配置
    */
-  async updateConfig(clubId: bigint, data: {
-    autoDeduct?: boolean;
-    minBalance?: number;
-    approvalMode?: number;
-    withdrawFeeRate?: number;
-    minWithdrawAmount?: number;
-  }) {
-    // 确保配置存在
-    await this.getConfig(clubId);
+  async updateConfig(clubId: bigint, dto: any) {
+    const config = await this.getConfig(clubId);
+
+    return this.prisma.clubConfig.update({
+      where: { clubId },
+      data: dto,
+    });
+  }
+
+  /**
+   * 更新积分代扣开关
+   */
+  async updateAutoDeduct(
+    clubId: bigint,
+    enabled: boolean,
+    minBalance?: number,
+  ) {
+    const config = await this.getConfig(clubId);
 
     return this.prisma.clubConfig.update({
       where: { clubId },
       data: {
-        autoDeduct: data.autoDeduct,
-        minBalance: data.minBalance,
-        approvalMode: data.approvalMode,
-        withdrawFeeRate: data.withdrawFeeRate,
-        minWithdrawAmount: data.minWithdrawAmount,
+        autoDeduct: enabled,
+        minBalance: minBalance !== undefined ? minBalance : config.minBalance,
       },
     });
   }
 
   /**
-   * 获取审批模式
+   * 更新审批模式
+   * 1-仅通知 2-所属人 3-管理员 4-双签
    */
-  async getApprovalMode(clubId: bigint): Promise<number> {
-    const config = await this.getConfig(clubId);
-    return config.approvalMode ?? 1;
-  }
+  async updateApprovalMode(clubId: bigint, mode: number) {
+    if (mode < 1 || mode > 4) {
+      throw new Error('审批模式无效');
+    }
 
-  /**
-   * 检查是否启用自动代扣
-   */
-  async isAutoDeductEnabled(clubId: bigint): Promise<boolean> {
-    const config = await this.getConfig(clubId);
-    return config.autoDeduct ?? false;
+    return this.prisma.clubConfig.update({
+      where: { clubId },
+      data: { approvalMode: mode },
+    });
   }
 }

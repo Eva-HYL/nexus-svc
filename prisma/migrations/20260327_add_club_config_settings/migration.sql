@@ -1,0 +1,10 @@
+-- AlterTable
+ALTER TABLE `ClubConfig` 
+    ADD COLUMN `autoDeduct` BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN `minBalance` DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    ADD COLUMN `approvalMode` INTEGER NOT NULL DEFAULT 1,
+    ADD COLUMN `withdrawFeeRate` DECIMAL(5, 4) NOT NULL DEFAULT 0,
+    ADD COLUMN `minWithdrawAmount` DECIMAL(10, 2) NOT NULL DEFAULT 100,
+    ADD COLUMN `pointOrderOwnerRate` DECIMAL(5, 2) NOT NULL DEFAULT 30,
+    ADD COLUMN `pointOrderReceiverRate` DECIMAL(5, 2) NOT NULL DEFAULT 60,
+    ADD COLUMN `pointOrderClubRate` DECIMAL(5, 2) NOT NULL DEFAULT 10;

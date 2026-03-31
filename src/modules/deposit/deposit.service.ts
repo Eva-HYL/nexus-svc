@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { DepositStatus } from '@prisma/client';
 import { CreateDepositDto, RefundDepositDto } from './dto/create-deposit.dto';
 
 @Injectable()
@@ -42,28 +41,33 @@ export class DepositService {
    * 创建存单
    */
   async create(clubId: bigint, createdById: bigint, dto: CreateDepositDto) {
-    const statusMap: Record<number, DepositStatus> = {
-      1: DepositStatus.FROZEN,
-      2: DepositStatus.IN_USE,
-      3: DepositStatus.USED_UP,
-      4: DepositStatus.REFUNDED,
-      5: DepositStatus.EXPIRED,
-    };
-
     return this.prisma.deposit.create({
       data: {
         clubId,
         memberId: BigInt(dto.memberId),
         createdBy: createdById,
-        type: dto.type || 1,
+        type: dto.type,
         amount: dto.amount,
-        balance: dto.amount,
-        status: statusMap[dto.type || 1],
-        expiredToIncome: dto.expiredToIncome || false,
+        expiredToIncome: dto.expiredToIncome,
         expireDate: dto.expireDate ? new Date(dto.expireDate) : null,
         remark: dto.remark,
       },
     });
+  }
+
+  /**
+   * 获取存单详情
+   */
+  async findById(id: bigint) {
+    const deposit = await this.prisma.deposit.findUnique({
+      where: { id, deletedAt: null },
+    });
+
+    if (!deposit) {
+      throw new NotFoundException('存单不存在');
+    }
+
+    return deposit;
   }
 
   /**
@@ -89,24 +93,9 @@ export class DepositService {
     return this.prisma.deposit.update({
       where: { id },
       data: {
-        status: DepositStatus.REFUNDED,
+        status: 'REFUNDED',
         balance: 0,
       },
     });
-  }
-
-  /**
-   * 根据 ID 查找存单
-   */
-  async findById(id: bigint) {
-    const deposit = await this.prisma.deposit.findUnique({
-      where: { id, deletedAt: null },
-    });
-
-    if (!deposit) {
-      throw new NotFoundException('存单不存在');
-    }
-
-    return deposit;
   }
 }

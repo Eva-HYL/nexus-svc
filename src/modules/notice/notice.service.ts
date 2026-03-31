@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { NoticeType } from '@prisma/client';
 import { CreateNoticeDto, UpdateNoticeDto } from './dto/create-notice.dto';
 
 @Injectable()
@@ -10,15 +9,18 @@ export class NoticeService {
   /**
    * 获取公告列表
    */
-  async findAll(clubId: bigint, page: number, pageSize: number) {
+  async findAll(clubId: bigint, page: number, pageSize: number, type?: number) {
+    const where: any = { clubId, deletedAt: null };
+    if (type) where.type = type;
+
     const [list, total] = await Promise.all([
       this.prisma.clubNotice.findMany({
-        where: { clubId, status: 1, deletedAt: null },
+        where,
         orderBy: [{ isTop: 'desc' }, { publishAt: 'desc' }],
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
-      this.prisma.clubNotice.count({ where: { clubId, status: 1, deletedAt: null } }),
+      this.prisma.clubNotice.count({ where }),
     ]);
 
     return {
@@ -49,20 +51,14 @@ export class NoticeService {
    * 创建公告
    */
   async create(clubId: bigint, publisherId: bigint, dto: CreateNoticeDto) {
-    const typeMap: Record<number, NoticeType> = {
-      1: NoticeType.NORMAL,
-      2: NoticeType.IMPORTANT,
-      3: NoticeType.URGENT,
-    };
-
     return this.prisma.clubNotice.create({
       data: {
         clubId,
         publisher: publisherId,
         title: dto.title,
         content: dto.content,
-        type: typeMap[dto.type || 1],
-        isTop: dto.isTop || false,
+        type: dto.type,
+        isTop: dto.isTop,
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
       },
     });

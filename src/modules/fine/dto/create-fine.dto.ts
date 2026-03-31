@@ -1,5 +1,9 @@
 import { IsString, IsNotEmpty, IsInt, Min, Max, IsOptional } from 'class-validator';
+import { FineType, FineStatus } from '@prisma/client';
 
+/**
+ * 创建罚款 DTO
+ */
 export class CreateFineDto {
   @IsString()
   @IsNotEmpty()
@@ -8,7 +12,8 @@ export class CreateFineDto {
   @IsInt()
   @Min(1)
   @Max(4)
-  type?: number = 1; // 1 违规 2 迟到 3 投诉 4 其他
+  @IsOptional()
+  type?: FineType = FineType.VIOLATION; // 1 违规 2 迟到 3 投诉 4 其他
 
   @IsString()
   @IsNotEmpty()
@@ -23,6 +28,9 @@ export class CreateFineDto {
   dueDate?: string;
 }
 
+/**
+ * 缴纳罚款 DTO
+ */
 export class PayFineDto {
   @IsInt()
   @Min(1)

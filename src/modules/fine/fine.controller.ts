@@ -1,8 +1,13 @@
-import { Controller, Get, Post, Put, Query, Body, Param, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { FineService } from './fine.service';
 import { CreateFineDto, PayFineDto } from './dto/create-fine.dto';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { MemberRole } from '@prisma/client';
 
-@Controller('api/fine')
+@Controller('fine')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class FineController {
   constructor(private readonly fineService: FineService) {}
 
@@ -19,9 +24,10 @@ export class FineController {
   }
 
   /**
-   * 创建罚款（管理员）
+   * 创建罚款（组长及以上）
    */
   @Post('create')
+  @Roles(MemberRole.LEADER, MemberRole.ADMIN, MemberRole.OWNER)
   async createFine(@Request() req: any, @Body() dto: CreateFineDto) {
     const { clubId } = req.user;
     const issuedById = req.user.memberId;
@@ -37,9 +43,10 @@ export class FineController {
   }
 
   /**
-   * 豁免罚款（管理员）
+   * 豁免罚款（管理员及以上）
    */
   @Put(':id/waive')
+  @Roles(MemberRole.ADMIN, MemberRole.OWNER)
   async waiveFine(@Param('id') id: string) {
     return this.fineService.waive(BigInt(id));
   }
